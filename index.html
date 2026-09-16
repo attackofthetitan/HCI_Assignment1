@@ -1,0 +1,1264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Threadlet: a Fitts' Law experiment comparing contextual and bottom-of-chat follow-up buttons in an LLM transcript. HCI Assignment 1, Part II.">
+<title>Threadlet · A Fitts’ Law experiment</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563eb'/%3E%3Cpath d='M9 8v11a5 5 0 0 0 5 5h9M9 12h10a4 4 0 0 1 4 4v2' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  :root { color-scheme:light; --ink:#17253c; --muted:#63738a; --blue:#2563eb; --line:#e1e7f0; --paper:#fff; --bg:#f5f7fb; --orange:#eb6834; }
+  html { scrollbar-gutter:stable; }
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  button { font:inherit; cursor:pointer; }
+  button:disabled { cursor:not-allowed; opacity:.5; }
+  button:focus-visible, a:focus-visible { outline:3px solid #93b4ff; outline-offset:4px; }
+  .app-header { height:52px; border-bottom:1px solid var(--line); background:var(--paper); position:sticky; top:0; z-index:6; }
+  .header-inner { max-width:1100px; height:100%; margin:auto; padding:0 24px; display:flex; align-items:center; justify-content:space-between; }
+  .brand { display:flex; align-items:center; gap:9px; font-size:18px; font-weight:750; letter-spacing:-.6px; }
+  .brand svg { width:27px; height:27px; }
+  .header-note { font-size:13px; color:var(--muted); }
+  .content { max-width:880px; margin:0 auto; padding:52px 24px 80px; }
+  .eyebrow { margin:0 0 14px; color:var(--blue); font-size:12px; font-weight:750; letter-spacing:.13em; text-transform:uppercase; }
+  h1 { margin:0 0 16px; font-size:clamp(29px,4vw,40px); line-height:1.16; letter-spacing:-1.4px; font-weight:720; }
+  h2 { margin:0 0 10px; font-size:21px; line-height:1.3; letter-spacing:-.5px; }
+  h3 { margin:26px 0 6px; font-size:15px; font-weight:700; }
+  p { margin:0 0 15px; }
+  .lede { color:var(--muted); font-size:17.5px; max-width:64ch; }
+  section.block { margin-top:46px; }
+  hr { border:0; border-top:1px solid var(--line); margin:46px 0 0; }
+  .card { border:1px solid var(--line); border-radius:16px; background:var(--paper); padding:26px; }
+  .actions { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .button { border:1px solid #cbd5e1; background:var(--paper); color:var(--ink); padding:10px 17px; border-radius:9px; font-size:14px; font-weight:650; min-height:42px; }
+  .button:hover:enabled { background:#f0f4fa; border-color:#9eadc2; }
+  .button.primary { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .button.primary:hover:enabled { background:#1d4ed8; }
+  .fine { color:var(--muted); font-size:13px; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin:18px 0 0; }
+  .layout-example { display:flex; gap:13px; align-items:flex-start; }
+  .layout-example svg { width:46px; height:46px; flex-shrink:0; }
+  .layout-example strong { display:block; font-size:15px; margin-bottom:3px; }
+  .layout-example p { color:var(--muted); font-size:14px; margin:0; }
+  .steps { padding:0; margin:0; list-style:none; display:grid; gap:16px; }
+  .steps li { display:flex; align-items:flex-start; gap:13px; }
+  .step-number { display:grid; place-items:center; width:27px; height:27px; flex-shrink:0; border:1px solid #cddcfb; border-radius:50%; color:var(--blue); font-size:13px; font-weight:700; }
+  .steps strong { display:block; font-size:15px; margin:1px 0 2px; }
+  .steps p { margin:0; color:var(--muted); font-size:14px; }
+  .video { position:relative; width:100%; aspect-ratio:16/9; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--paper); }
+  .video iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
+  .pending { border:1px dashed #b9c6da; border-radius:12px; padding:18px 20px; background:var(--paper); color:var(--muted); font-size:14.5px; }
+  .pending strong { display:block; color:var(--ink); font-size:12px; letter-spacing:.09em; text-transform:uppercase; margin-bottom:5px; }
+  .formula { border:1px solid var(--line); border-left:3px solid var(--blue); border-radius:8px; background:var(--paper); padding:17px 21px; margin:16px 0; font-size:18px; overflow-x:auto; font-variant-numeric:tabular-nums; }
+  .formula small { display:block; font-size:13px; color:var(--muted); margin-top:7px; font-variant-numeric:normal; }
+  figure { margin:18px 0 0; }
+  figure svg { display:block; width:100%; height:auto; border:1px solid var(--line); border-radius:12px; background:var(--paper); }
+  figcaption { font-size:13px; color:var(--muted); margin-top:9px; }
+  .scroll { overflow-x:auto; border:1px solid var(--line); border-radius:12px; background:var(--paper); margin-top:18px; }
+  table { border-collapse:collapse; width:100%; font-size:13.5px; }
+  th, td { border-bottom:1px solid var(--line); padding:8px 13px; text-align:left; white-space:nowrap; }
+  thead th { position:sticky; top:0; background:var(--paper); font-weight:700; border-bottom:2px solid #cbd6e6; }
+  td:nth-child(n+3), th:nth-child(n+3) { text-align:right; font-variant-numeric:tabular-nums; }
+  tbody tr:last-child td { border-bottom:0; }
+  .swatch { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:7px; }
+  .sw-t { background:var(--blue); } .sw-c { background:var(--orange); }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:14px; margin:18px 0 0; }
+  .stat { border:1px solid var(--line); border-radius:11px; background:var(--paper); padding:15px 17px; }
+  .stat b { display:block; font-size:23px; font-weight:700; letter-spacing:-.6px; font-variant-numeric:tabular-nums; }
+  .stat span { font-size:12.5px; color:var(--muted); }
+  .study-view { margin:0 auto; padding-top:16px; }
+  .study-bar { display:flex; height:40px; align-items:center; justify-content:space-between; gap:20px; font-size:14px; }
+  .study-left { display:flex; gap:10px; align-items:center; }
+  .layout-badge { border:1px solid #ccdbfb; border-radius:6px; padding:2px 8px; font-size:12px; color:#1e54c6; background:#edf3ff; font-weight:650; }
+  .progress-cluster { display:flex; align-items:center; gap:12px; color:var(--muted); font-size:13px; }
+  progress { appearance:none; border:0; width:110px; height:5px; overflow:hidden; border-radius:5px; background:#e2e8f0; }
+  progress::-webkit-progress-bar { background:#e2e8f0; }
+  progress::-webkit-progress-value { background:var(--blue); }
+  progress::-moz-progress-bar { background:var(--blue); }
+  .canvas-frame { border:1px solid #d7e0ed; border-radius:14px; overflow:hidden; background:#fff; box-shadow:0 5px 22px #263b5910; }
+  canvas { display:block; touch-action:none; user-select:none; }
+  .trial-footer { height:44px; display:flex; justify-content:space-between; align-items:center; gap:14px; font-size:14px; }
+  #trial-status { margin:0; }
+  .panel-view { max-width:760px; margin:auto; padding:52px 24px; }
+  .panel-view .card { padding:30px; }
+  .metric-line { display:flex; gap:30px; padding:18px 0; margin:20px 0; border-block:1px solid var(--line); }
+  .metric-value { font-size:25px; font-weight:700; letter-spacing:-.7px; }
+  .metric-label { font-size:13px; color:var(--muted); }
+  .text-button { border:0; padding:8px 0; background:none; color:#375d99; font-size:13px; text-decoration:underline; text-underline-offset:3px; }
+  .method-note { font-size:13px; color:var(--muted); margin-top:20px; }
+  .viewport-notice { position:fixed; inset:52px 0 0; z-index:10; display:grid; place-items:center; background:#f5f7fbf5; padding:24px; }
+  .viewport-notice .card { max-width:470px; }
+  .notice-code { display:inline-block; background:#edf3ff; color:#1e54c6; border-radius:6px; padding:5px 9px; font-size:13px; margin-bottom:14px; }
+  footer { border-top:1px solid var(--line); margin-top:56px; padding-top:18px; font-size:13px; color:var(--muted); }
+  @media(max-width:959px) { .study-view { display:none !important; } }
+  @media(max-width:650px) { .content { padding-top:32px; } .two { grid-template-columns:1fr; } .panel-view { padding-top:30px; } .panel-view .card { padding:22px; } }
+</style>
+</head>
+<body>
+<header class="app-header"><div class="header-inner">
+  <div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#2563eb"/><path d="M9 8v11a5 5 0 0 0 5 5h9M9 12h10a4 4 0 0 1 4 4v2" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>Threadlet</div>
+  <span class="header-note">HCI Assignment 1 · Part II</span>
+</div></header>
+
+<main>
+<section id="intro-view" class="content" aria-labelledby="intro-title">
+  <p class="eyebrow">A Fitts’ Law experiment</p>
+  <h1 id="intro-title">A question about<br>one part of an answer.</h1>
+  <p class="lede">Is it faster to ask a chatbot about one paragraph if the ask button sits right next to it? This page is the experiment, the data and the write-up.</p>
+
+  <section class="block" aria-labelledby="h-scenario">
+    <h2 id="h-scenario">Scenario</h2>
+    <p>You ask a chatbot something and get back a long answer. One paragraph in the middle doesn&rsquo;t quite make sense, so you want to ask about that part.</p>
+    <p>Every chat app today gives you one text box, stuck at the bottom of the screen. To ask your question you have to drag the mouse all the way down there, and then type out which part you were talking about. You lose your place in the text, and you have to describe something the app could already see you were looking at.</p>
+  </section>
+
+  <section class="block" aria-labelledby="h-innovation">
+    <h2 id="h-innovation">Innovation</h2>
+    <p><strong>Threadlet</strong> puts a small ask button right beside each paragraph instead of at the bottom of the screen. Clicking it asks about that paragraph, so you never have to explain which part you meant &mdash; and your mouse has a much shorter trip. The experiment compares the two button positions:</p>
+    <div class="two">
+      <div class="card layout-example">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="2" y="2" width="44" height="44" rx="8" fill="#edf3ff"/><path d="M10 13h22M10 19h16M10 31h18M10 37h23" stroke="#afc1e0" stroke-width="2" stroke-linecap="round"/><circle cx="35" cy="24" r="6" fill="#2563eb"/></svg>
+        <div><strong>Threadlet</strong><p>Sits just under the paragraph &mdash; 120, 90 or 60 pixels away.</p></div>
+      </div>
+      <div class="card layout-example">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="2" y="2" width="44" height="44" rx="8" fill="#f1f5f9"/><path d="M10 13h22M10 19h16M10 25h22" stroke="#afc1e0" stroke-width="2" stroke-linecap="round"/><rect x="8" y="32" width="32" height="9" rx="3" fill="#dbe4f0"/><circle cx="35" cy="36" r="6" fill="#2563eb"/></svg>
+        <div><strong>Conventional</strong><p>Stays by the text box &mdash; 420, 300 or 180 pixels away.</p></div>
+      </div>
+    </div>
+    <p class="fine" style="margin-top:16px">The nearer button is closer by design. The experiment measures how much time that saves, and whether the movement follows Fitts&rsquo; Law.</p>
+  </section>
+
+  <section class="block" aria-labelledby="h-application">
+    <h2 id="h-application">Application</h2>
+    <p>One HTML file, nothing loaded from elsewhere. It draws a simulated chat. Each go highlights one paragraph with a marker beside it; you click the marker, then click the blue ask button as fast as you comfortably can.</p>
+    <p>The marker fixes the starting point, so the distance is the same every go.</p>
+    <p>The button takes six sizes (20 to 64 units) at two positions across three paragraphs: <strong>36 combinations</strong>, each measured 12 or 13 times. <strong>450 clicks</strong> in 5 rounds of 90, with a rest every 18. Finished rounds are saved in the browser.</p>
+    <p>Each click records how far it landed from the middle of the button.</p>
+    <p>The board grows to fit the screen, up to 2.5&times;. Distances and sizes grow together, so the 36 combinations keep the same difficulty. The scale used is saved with the data.</p>
+    <p>The timer runs from the first movement to the click, so time spent waiting at the marker is not counted. Misses are recorded as misses and kept in the data.</p>
+    <details style="margin-top:14px">
+      <summary class="fine" style="cursor:pointer">Why this design, and what problem it solves</summary>
+      <p class="fine" style="margin-top:10px">Buttons that sit next to the thing they act on are showing up everywhere &mdash; comment buttons in documents, toolbars that appear when you select text. People add them because they feel better, not because anyone measured it. This puts a number on one part of that: how much quicker the button is to reach. It says nothing about whether you understand the answer better &mdash; there is no reading or typing in this task, just clicking.</p>
+    </details>
+  </section>
+
+  <hr>
+
+  <section class="block" aria-labelledby="h-run">
+    <h2 id="h-run">Run the experiment</h2>
+    <div class="card" style="margin-top:16px">
+      <ol class="steps">
+        <li><span class="step-number">1</span><div><strong>Click the marker beside the highlighted part.</strong><p>That is the bit you are asking about. Take as long as you like before you move &mdash; that time is not counted.</p></div></li>
+        <li><span class="step-number">2</span><div><strong>Move to the blue button and click it.</strong><p>As fast and as accurately as you comfortably can. The clock starts when you start moving.</p></div></li>
+        <li><span class="step-number">3</span><div><strong>Do it again, then save your results.</strong><p>Six practice goes first, then rounds of 90 clicks with a short rest every 18. You can stop after any round and carry on later.</p></div></li>
+      </ol>
+      <div class="actions" style="margin-top:24px"><button class="button primary" id="start-practice">Start with six practice clicks <span aria-hidden="true">→</span></button><span class="fine">Needs a mouse &middot; no typing or reading</span></div>
+      <div id="bank-status" style="margin-top:22px"></div>
+    </div>
+    <p class="fine" style="margin-top:16px">Use the same mouse the whole way through, keep the browser zoom at 100%, and do not resize the window once you have started. Make the window at least 960 &times; 720 pixels first &mdash; bigger is better, as the experiment will use the room. The chat is fake. Finished rounds are saved in this browser so you can come back later; nothing is sent anywhere.</p>
+    <noscript><p>This experiment requires JavaScript.</p></noscript>
+  </section>
+
+  <hr>
+
+  <section class="block" aria-labelledby="h-video">
+    <h2 id="h-video">Experiment recording</h2>
+    <div id="video-slot" style="margin-top:16px"></div>
+  </section>
+
+  <hr>
+
+  <section class="block" aria-labelledby="h-results">
+    <h2 id="h-results">Results</h2>
+    <p class="fine" id="results-source"></p>
+    <div id="results-slot"></div>
+  </section>
+
+  <footer>
+    <p>Human-Computer Interaction, Autumn 2026 — Assignment 1, Part II. Built with an LLM as a rapid-prototyping partner. Source: <a href="https://github.com/attackofthetitan/HCI_Assignment1">github.com/attackofthetitan/HCI_Assignment1</a>.</p>
+  </footer>
+</section>
+
+<section id="play-view" class="study-view" hidden aria-label="Pointing experiment">
+  <div class="study-bar">
+    <div class="study-left"><strong id="block-label"></strong><span id="layout-badge" class="layout-badge"></span></div>
+    <div class="progress-cluster"><span id="progress-label"></span><progress id="study-progress" max="90" value="0" aria-label="Completed trials"></progress></div>
+  </div>
+  <div class="canvas-frame"><canvas id="experiment" width="900" height="560" aria-label="A simulated chat. Click the marker beside the highlighted part of the paragraph, then click the blue ask button." aria-describedby="trial-status">A mouse-based chat pointing experiment. This browser needs canvas support to run it.</canvas></div>
+  <div class="trial-footer"><p id="trial-status" role="status" aria-live="polite"></p><span class="fine" id="phase-note"></span></div>
+</section>
+
+<section id="panel-view" class="panel-view" hidden aria-labelledby="panel-title"><div class="card">
+  <p class="eyebrow" id="panel-eyebrow"></p><h1 id="panel-title" style="font-size:30px"></h1><p id="panel-description" class="lede" style="font-size:16px"></p>
+  <div id="panel-metrics" class="metric-line" hidden></div>
+  <div class="actions"><button id="continue-button" class="button primary"></button><button id="export-button" class="button" hidden>Save all my data (CSV)</button></div>
+  <p id="export-status" class="fine" role="status" style="margin:14px 0 0"></p>
+  <button id="practice-export" class="text-button" hidden>Save the practice goes separately</button>
+  <p id="panel-note" class="method-note"></p>
+</div></section>
+</main>
+
+<aside id="viewport-notice" class="viewport-notice" hidden aria-labelledby="viewport-title"><div class="card">
+  <span class="notice-code">Desktop mouse experiment</span><h2 id="viewport-title">Give the experiment a little more room.</h2>
+  <p>This needs a window of at least <strong>960 × 720 pixels</strong>. Make the window bigger and keep the zoom at 100%. The experiment grows to fill the room it is given.</p>
+  <p id="viewport-size" class="fine"></p>
+</div></aside>
+
+<script id="session-data">
+'use strict';
+const SESSION_CSV = `session_id,run,trial,block,layout,passage,A_nominal,A,W,MT,ID,scale,click_dx,click_dy,hit,valid,invalid_reason
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,1,1,conventional,middle,300,288.376,40,377,3.037,2.05,4.065,1.707,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,2,1,conventional,lower,180,159.27,32,220,2.579,2.05,-8.618,-5.447,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,3,1,conventional,lower,180,155.71,50,234,2.041,2.05,2.114,-5.447,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,4,1,conventional,upper,420,396.667,50,388,3.159,2.05,-4.39,8.537,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,5,1,conventional,lower,180,173.253,64,199,1.89,2.05,8.293,-8.374,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,6,1,conventional,middle,300,306.911,20,605,4.031,2.05,-1.463,3.008,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,7,1,conventional,lower,180,178.797,26,340,2.978,2.05,-1.138,-6.423,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,8,1,conventional,middle,300,279.279,64,397,2.423,2.05,-3.415,7.561,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,9,1,conventional,lower,180,173.95,20,440,3.278,2.05,2.439,-0.569,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,10,1,conventional,upper,420,399.634,40,368,3.458,2.05,-4.715,-21.382,false,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,11,1,conventional,middle,300,298.173,50,467,2.8,2.05,1.789,-1.87,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,12,1,conventional,upper,420,392.439,20,453,4.366,2.05,-0.163,-6.748,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,13,1,conventional,upper,420,406.1,26,528,4.055,2.05,0.163,-11.626,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,14,1,conventional,middle,300,278.619,26,440,3.55,2.05,7.967,2.033,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,15,1,conventional,upper,420,403.178,32,462,3.765,2.05,-12.846,-0.569,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,16,1,conventional,lower,180,166.423,40,251,2.368,2.05,-11.22,18.943,false,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,17,1,conventional,upper,420,414.228,64,345,2.902,2.05,-2.439,-10.976,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,18,1,conventional,middle,300,293.906,32,341,3.348,2.05,5.366,3.659,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,19,2,threadlet,middle,90,77.18,64,172,1.141,2.05,-1.463,-10.732,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,20,2,threadlet,upper,120,101.221,32,159,2.058,2.05,-6.341,-11.789,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,21,2,threadlet,upper,120,117.927,50,146,1.748,2.05,6.667,1.22,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,22,2,threadlet,lower,60,51.994,40,124,1.202,2.05,-1.463,27.073,false,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,23,2,threadlet,lower,60,56.882,50,121,1.096,2.05,-1.789,0.732,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,24,2,threadlet,upper,120,104.493,20,200,2.638,2.05,-7.642,-13.74,false,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,25,2,threadlet,lower,60,51.301,64,111,0.849,2.05,3.74,-7.398,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,26,2,threadlet,middle,90,91.196,50,158,1.498,2.05,-2.764,-10.081,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,27,2,threadlet,lower,60,52.969,26,147,1.603,2.05,-1.463,-1.22,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,28,2,threadlet,lower,60,46.425,32,148,1.293,2.05,-2.439,-1.545,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,29,2,threadlet,lower,60,50.328,20,189,1.814,2.05,-0.488,-11.951,false,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,30,2,threadlet,upper,120,98.323,40,153,1.79,2.05,3.415,-0.081,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,31,2,threadlet,middle,90,70.343,32,179,1.677,2.05,-1.463,11.707,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,32,2,threadlet,middle,90,89.809,40,223,1.698,2.05,-1.463,-14.634,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,33,2,threadlet,upper,120,97.665,64,126,1.337,2.05,0.488,13.577,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,34,2,threadlet,middle,90,75.124,20,252,2.25,2.05,0.488,6.504,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,35,2,threadlet,upper,120,110.326,26,249,2.39,2.05,-2.764,-1.057,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,36,2,threadlet,middle,90,71.229,26,233,1.903,2.05,-2.439,-6.829,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,37,3,conventional,lower,180,178.797,64,212,1.924,2.05,2.764,-10,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,38,3,conventional,middle,300,298.143,40,404,3.08,2.05,-2.764,-13.252,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,39,3,conventional,upper,420,417.174,50,386,3.224,2.05,8.293,-14.228,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,40,3,conventional,upper,420,411.31,26,491,4.072,2.05,2.114,-1.87,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,41,3,conventional,lower,180,153.468,26,318,2.787,2.05,-1.463,0.732,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,42,3,conventional,upper,420,406.142,64,396,2.877,2.05,6.667,-35.366,false,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,43,3,conventional,lower,180,166.429,20,518,3.221,2.05,-1.138,1.382,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,44,3,conventional,upper,420,389.859,40,426,3.426,2.05,8.293,-7.398,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,45,3,conventional,upper,420,403.198,32,465,3.766,2.05,-0.813,-13.252,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,46,3,conventional,middle,300,290.354,20,498,3.956,2.05,3.74,-7.398,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,47,3,conventional,upper,420,413.905,20,580,4.439,2.05,-0.488,1.382,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,48,3,conventional,lower,180,182.049,40,274,2.473,2.05,-1.138,-10,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,49,3,conventional,middle,300,273.74,50,352,2.695,2.05,2.439,-0.244,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,50,3,conventional,lower,180,182.744,50,256,2.219,2.05,7.317,-9.024,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,51,3,conventional,middle,300,277.663,26,489,3.546,2.05,-2.439,-11.951,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,52,3,conventional,middle,300,294.888,32,325,3.353,2.05,-4.065,-14.878,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,53,3,conventional,middle,300,283.171,64,171,2.44,2.05,1.463,-17.805,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,54,3,conventional,lower,180,175.968,32,298,2.7,2.05,-7.967,-9.35,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,55,4,threadlet,lower,60,50.384,40,101,1.176,2.05,0.163,1.382,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,56,4,threadlet,middle,90,72.204,20,283,2.205,2.05,1.463,5.528,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,57,4,threadlet,lower,60,48.17,50,85,0.973,2.05,-4.39,-1.545,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,58,4,threadlet,upper,120,100.591,50,142,1.591,2.05,-4.715,23.659,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,59,4,threadlet,middle,90,82.28,50,133,1.404,2.05,1.789,-9.756,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,60,4,threadlet,upper,120,117.913,32,272,2.228,2.05,4.39,-6.911,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,61,4,threadlet,upper,120,107.475,26,231,2.36,2.05,-2.439,6.098,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,62,4,threadlet,middle,90,85.259,64,87,1.222,2.05,-3.089,7.48,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,63,4,threadlet,middle,90,80.976,32,194,1.82,2.05,-0.488,-10.081,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,64,4,threadlet,lower,60,60.734,32,152,1.535,2.05,-0.813,9.187,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,65,4,threadlet,lower,60,37.671,64,68,0.668,2.05,-1.789,-12.276,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,66,4,threadlet,lower,60,53.903,20,169,1.886,2.05,-0.488,-2.52,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,67,4,threadlet,middle,90,78.376,40,133,1.565,2.05,-0.813,-9.756,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,68,4,threadlet,upper,120,112.455,40,206,1.93,2.05,4.065,0.244,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,69,4,threadlet,lower,60,50.346,26,174,1.554,2.05,3.415,0.407,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,70,4,threadlet,upper,120,114.289,64,183,1.478,2.05,9.268,-10.488,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,71,4,threadlet,upper,120,105.453,20,274,2.649,2.05,-5.041,9.024,false,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,72,4,threadlet,middle,90,79.062,26,194,2.015,2.05,-5.691,-2.927,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,73,5,conventional,middle,300,291.952,64,311,2.476,2.05,1.463,-4.146,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,74,5,conventional,lower,180,165.128,32,449,2.623,2.05,-6.992,-0.894,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,75,5,conventional,lower,180,170.329,50,179,2.14,2.05,4.39,-23.659,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,76,5,conventional,lower,180,169.367,26,352,2.91,2.05,-1.463,-4.146,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,77,5,conventional,lower,180,169.35,64,224,1.866,2.05,-7.317,-5.122,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,78,5,conventional,middle,300,295.867,20,480,3.981,2.05,3.415,-15.203,false,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,79,5,conventional,middle,300,298.158,26,620,3.64,2.05,1.463,-9.675,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,80,5,conventional,upper,420,412.938,50,556,3.211,2.05,-8.943,-14.553,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,81,5,conventional,lower,180,148.557,40,170,2.237,2.05,-11.22,7.561,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,82,5,conventional,middle,300,284.163,50,234,2.741,2.05,-5.366,-8.374,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,83,5,conventional,upper,420,416.202,40,477,3.512,2.05,-1.138,-16.179,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,84,5,conventional,upper,420,410.014,32,477,3.788,2.05,-5.041,-9.675,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,85,5,conventional,lower,180,179.122,20,709,3.316,2.05,-3.415,-5.122,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,86,5,conventional,upper,420,412.947,20,731,4.436,2.05,-0.488,-1.87,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,87,5,conventional,upper,420,419.154,64,366,2.916,2.05,-1.463,-50.325,false,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,88,5,conventional,middle,300,300.082,40,556,3.088,2.05,2.114,2.358,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,89,5,conventional,upper,420,415.223,26,362,4.085,2.05,0.163,1.057,true,true,
+7599f350-325c-4fc1-a47e-b4689af44ce5,1,90,5,conventional,middle,300,279.269,32,343,3.282,2.05,8.293,4.309,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,1,6,threadlet,middle,90,67.658,26,188,1.849,2.05,-0.163,-0.976,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,2,6,threadlet,upper,120,110.326,50,150,1.681,2.05,-12.195,-18.293,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,3,6,threadlet,middle,90,84.913,40,146,1.643,2.05,-2.439,-13.008,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,4,6,threadlet,lower,60,47.107,26,146,1.492,2.05,2.764,-2.52,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,5,6,threadlet,middle,90,74.161,64,140,1.11,2.05,-2.764,-18.537,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,6,6,threadlet,upper,120,120.082,26,252,2.49,2.05,4.715,-2.033,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,7,6,threadlet,upper,120,119.146,20,263,2.799,2.05,-12.195,10.976,false,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,8,6,threadlet,lower,60,48.396,64,84,0.812,2.05,-3.415,-9.024,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,9,6,threadlet,upper,120,111.609,40,176,1.922,2.05,-0.488,17.805,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,10,6,threadlet,lower,60,43.606,50,108,0.905,2.05,-4.39,-3.496,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,11,6,threadlet,lower,60,50.165,20,223,1.811,2.05,-0.488,-6.423,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,12,6,threadlet,upper,120,108.377,64,113,1.429,2.05,0.163,-0.732,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,13,6,threadlet,upper,120,119.146,32,380,2.24,2.05,-6.016,-7.561,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,14,6,threadlet,lower,60,51.322,40,105,1.191,2.05,2.764,0.407,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,15,6,threadlet,middle,90,94.991,32,365,1.989,2.05,-2.764,0.65,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,16,6,threadlet,middle,90,79.423,50,131,1.372,2.05,-5.366,7.805,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,17,6,threadlet,middle,90,89.107,20,302,2.448,2.05,0.488,0.976,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,18,6,threadlet,lower,60,64.976,32,136,1.6,2.05,2.439,-10.976,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,19,7,conventional,middle,300,282.521,26,413,3.569,2.05,6.992,-1.545,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,20,7,conventional,lower,180,179.789,26,437,2.985,2.05,4.39,-4.146,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,21,7,conventional,upper,420,397.683,40,492,3.452,2.05,12.195,-16.179,false,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,22,7,conventional,upper,420,419.17,50,626,3.23,2.05,1.789,-2.195,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,23,7,conventional,upper,420,417.198,32,512,3.811,2.05,-4.065,-15.854,false,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,24,7,conventional,middle,300,299.804,20,576,3.999,2.05,-0.163,-2.846,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,25,7,conventional,lower,180,172.277,64,199,1.884,2.05,3.415,-27.561,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,26,7,conventional,lower,180,167.399,32,373,2.64,2.05,1.138,-9.024,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,27,7,conventional,upper,420,415.877,64,349,2.907,2.05,3.089,-6.098,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,28,7,conventional,upper,420,399.309,26,565,4.032,2.05,3.089,-7.073,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,29,7,conventional,middle,300,301.076,50,306,2.812,2.05,3.089,-27.886,false,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,30,7,conventional,middle,300,263.735,40,363,2.925,2.05,6.016,5.285,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,31,7,conventional,lower,180,175.237,50,200,2.171,2.05,-2.439,-16.829,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,32,7,conventional,lower,180,176.835,40,360,2.439,2.05,3.415,4.309,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,33,7,conventional,lower,180,167.074,20,477,3.226,2.05,2.114,-2.195,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,34,7,conventional,upper,420,398.313,20,659,4.387,2.05,-3.089,3.333,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,35,7,conventional,middle,300,305.625,32,618,3.399,2.05,-5.041,-3.821,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,36,7,conventional,middle,300,274.443,64,319,2.403,2.05,1.463,8.537,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,37,8,threadlet,lower,60,40.247,64,95,0.704,2.05,-5.691,-7.398,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,38,8,threadlet,middle,90,85.861,40,196,1.654,2.05,-9.268,2.927,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,39,8,threadlet,lower,60,61.059,32,104,1.54,2.05,8.293,-1.545,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,40,8,threadlet,upper,120,112.93,26,339,2.418,2.05,-4.065,-0.732,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,41,8,threadlet,upper,120,122.08,20,634,2.829,2.05,4.39,-7.886,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,42,8,threadlet,middle,90,86.352,20,485,2.411,2.05,0.488,-2.927,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,43,8,threadlet,middle,90,77.135,32,185,1.77,2.05,-6.341,-4.228,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,44,8,threadlet,upper,120,92.805,64,118,1.293,2.05,-6.341,-31.951,false,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,45,8,threadlet,upper,120,125.656,40,207,2.05,2.05,-5.691,-3.984,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,46,8,threadlet,middle,90,88.788,64,121,1.255,2.05,2.439,2.927,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,47,8,threadlet,middle,90,78.605,26,327,2.008,2.05,2.764,-3.252,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,48,8,threadlet,lower,60,62.688,26,177,1.77,2.05,-2.439,-1.545,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,49,8,threadlet,upper,120,115.209,32,241,2.202,2.05,-3.74,-14.715,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,50,8,threadlet,lower,60,46.1,50,103,0.943,2.05,4.715,6.585,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,51,8,threadlet,upper,120,100.244,50,154,1.587,2.05,5.041,19.756,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,52,8,threadlet,middle,90,76.112,50,135,1.335,2.05,1.463,-19.512,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,53,8,threadlet,lower,60,51.303,20,442,1.834,2.05,-3.089,1.057,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,54,8,threadlet,lower,60,55.873,40,155,1.261,2.05,6.667,-6.098,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,55,9,conventional,upper,420,391.804,32,512,3.727,2.05,-5.366,-4.472,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,56,9,conventional,upper,420,419.107,50,403,3.23,2.05,-1.789,-9.35,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,57,9,conventional,upper,420,397.67,40,447,3.452,2.05,-3.415,-9.35,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,58,9,conventional,upper,420,405.447,20,698,4.411,2.05,-3.089,-3.821,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,59,9,conventional,lower,180,141.708,50,239,1.939,2.05,-8.293,12.439,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,60,9,conventional,middle,300,292.293,20,531,3.965,2.05,1.463,-3.496,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,61,9,conventional,lower,180,185.011,32,699,2.762,2.05,-2.439,-2.846,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,62,9,conventional,lower,180,162.527,26,445,2.858,2.05,-7.317,-3.821,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,63,9,conventional,middle,300,299.129,26,530,3.644,2.05,1.463,-0.569,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,64,9,conventional,lower,180,161.243,64,378,1.815,2.05,-6.341,-1.545,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,65,9,conventional,lower,180,168.423,40,396,2.381,2.05,-1.138,-14.553,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,66,9,conventional,middle,300,283.506,50,649,2.738,2.05,7.967,-9.35,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,67,9,conventional,upper,420,406.463,64,387,2.878,2.05,-12.195,-0.894,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,68,9,conventional,upper,420,409.048,26,494,4.065,2.05,2.439,-2.846,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,69,9,conventional,middle,300,293.908,64,517,2.483,2.05,-1.138,-27.561,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,70,9,conventional,middle,300,289.038,32,486,3.327,2.05,0.813,-0.894,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,71,9,conventional,lower,180,177.805,20,565,3.306,2.05,0.813,-4.797,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,72,9,conventional,middle,300,282.229,40,452,3.01,2.05,-7.317,-7.073,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,73,10,threadlet,middle,90,59.875,64,125,0.953,2.05,-3.74,-14.634,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,74,10,threadlet,lower,60,46.732,20,218,1.738,2.05,-0.163,4.634,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,75,10,threadlet,upper,120,121.058,26,391,2.5,2.05,4.065,-0.081,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,76,10,threadlet,upper,120,108.093,64,125,1.427,2.05,-10.244,-14.39,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,77,10,threadlet,middle,90,77.419,26,312,1.992,2.05,1.789,-1.626,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,78,10,threadlet,lower,60,52.319,26,214,1.591,2.05,1.789,0.407,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,79,10,threadlet,middle,90,85.205,40,160,1.646,2.05,-5.366,27.317,false,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,80,10,threadlet,lower,60,45.125,50,89,0.928,2.05,-0.488,-11.301,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,81,10,threadlet,upper,120,107.083,40,208,1.879,2.05,0.813,-5.935,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,82,10,threadlet,lower,60,49.363,40,174,1.16,2.05,-1.789,-8.374,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,83,10,threadlet,upper,120,118.794,32,257,2.236,2.05,0.163,12.602,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,84,10,threadlet,middle,90,89.763,20,260,2.456,2.05,0.813,-2.276,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,85,10,threadlet,middle,90,79.41,50,135,1.372,2.05,-0.488,-11.707,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,86,10,threadlet,upper,120,118.139,20,412,2.788,2.05,-3.089,0.569,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,87,10,threadlet,middle,90,83.252,32,194,1.849,2.05,-0.813,-14.959,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,88,10,threadlet,upper,120,103.2,50,162,1.615,2.05,-0.488,-17.642,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,89,10,threadlet,lower,60,50.346,64,77,0.837,2.05,-2.439,-26.911,true,true,
+6b515c67-83d8-4d31-a68f-3a3958bc8acf,2,90,10,threadlet,lower,60,48.396,32,110,1.329,2.05,-1.138,-14.228,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,1,11,conventional,upper,420,414.562,50,321,3.216,2.05,2.114,16.016,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,2,11,conventional,lower,180,171.314,26,311,2.924,2.05,2.114,2.358,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,3,11,conventional,upper,420,396.717,20,532,4.381,2.05,-3.089,3.008,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,4,11,conventional,upper,420,402.912,40,389,3.469,2.05,2.439,14.715,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,5,11,conventional,middle,300,299.118,20,583,3.996,2.05,9.268,-2.195,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,6,11,conventional,lower,180,167.474,64,168,1.855,2.05,-3.415,-17.154,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,7,11,conventional,lower,180,159.604,32,251,2.582,2.05,-2.439,-20.081,false,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,8,11,conventional,middle,300,274.079,64,382,2.401,2.05,7.967,-9.675,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,9,11,conventional,middle,300,299.479,32,381,3.373,2.05,7.642,2.033,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,10,11,conventional,upper,420,395.699,64,306,2.845,2.05,11.219,-29.187,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,11,11,conventional,lower,180,176.196,40,259,2.434,2.05,9.919,17.642,false,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,12,11,conventional,middle,300,288.719,50,379,2.76,2.05,-2.439,-20.081,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,13,11,conventional,lower,180,174.245,50,300,2.165,2.05,-2.764,5.285,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,14,11,conventional,upper,420,411.626,26,451,4.073,2.05,6.667,-6.423,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,15,11,conventional,lower,180,155.728,20,442,3.135,2.05,1.463,-4.797,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,16,11,conventional,upper,420,414.276,32,419,3.802,2.05,9.919,5.285,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,17,11,conventional,middle,300,284.805,40,408,3.022,2.05,-1.138,-25.935,false,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,18,11,conventional,middle,300,289.719,26,406,3.602,2.05,-0.488,-0.894,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,19,12,threadlet,middle,90,72.617,50,168,1.294,2.05,5.041,1.626,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,20,12,threadlet,lower,60,51.647,26,137,1.578,2.05,3.415,3.333,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,21,12,threadlet,lower,60,49.792,64,105,0.83,2.05,3.74,-23.984,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,22,12,threadlet,upper,120,105.778,64,476,1.408,2.05,2.114,-14.065,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,23,12,threadlet,lower,60,41.873,20,323,1.629,2.05,4.39,-3.821,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,24,12,threadlet,middle,90,84.398,32,195,1.863,2.05,1.138,6.179,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,25,12,threadlet,middle,90,67.939,40,128,1.432,2.05,-3.415,-19.837,false,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,26,12,threadlet,upper,120,98.944,40,208,1.796,2.05,-11.22,-12.114,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,27,12,threadlet,upper,120,119.164,26,335,2.481,2.05,3.089,-3.984,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,28,12,threadlet,upper,120,104.5,20,366,2.638,2.05,-4.39,7.398,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,29,12,threadlet,upper,120,125.981,50,359,1.815,2.05,-1.463,-13.089,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,30,12,threadlet,upper,120,115.313,32,239,2.203,2.05,-0.488,3.496,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,31,12,threadlet,middle,90,84.24,20,450,2.382,2.05,-2.439,-3.252,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,32,12,threadlet,middle,90,75.812,64,104,1.127,2.05,-0.163,-24.065,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,33,12,threadlet,lower,60,53.342,40,90,1.223,2.05,4.715,-11.626,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,34,12,threadlet,lower,60,46.437,32,144,1.293,2.05,3.74,-2.52,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,35,12,threadlet,lower,60,50.338,50,99,1.005,2.05,-1.463,-5.447,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,36,12,threadlet,middle,90,76.824,26,222,1.984,2.05,-1.138,1.301,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,37,13,conventional,lower,180,169.709,50,190,2.136,2.05,15.122,-13.252,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,38,13,conventional,lower,180,172.31,20,345,3.265,2.05,-4.065,11.789,false,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,39,13,conventional,upper,420,404.495,50,459,3.184,2.05,-0.163,-2.846,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,40,13,conventional,middle,300,288.743,20,508,3.948,2.05,-5.041,2.033,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,41,13,conventional,lower,180,148.863,64,218,1.734,2.05,-10.894,23.821,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,42,13,conventional,upper,420,398.627,64,475,2.854,2.05,-9.268,-11.626,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,43,13,conventional,middle,300,266.261,26,401,3.491,2.05,3.415,3.659,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,44,13,conventional,upper,420,394.716,20,576,4.374,2.05,1.789,-5.772,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,45,13,conventional,middle,300,284.492,64,258,2.445,2.05,3.089,15.041,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,46,13,conventional,upper,420,398.943,32,404,3.751,2.05,6.016,-8.374,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,47,13,conventional,lower,180,173.335,32,383,2.682,2.05,5.041,7.886,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,48,13,conventional,upper,420,405.462,26,376,4.053,2.05,2.764,2.033,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,49,13,conventional,upper,420,424.311,40,338,3.537,2.05,-7.642,-30.163,false,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,50,13,conventional,lower,180,167.726,26,381,2.897,2.05,-2.114,-5.447,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,51,13,conventional,lower,180,173.345,40,237,2.415,2.05,-4.065,-19.106,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,52,13,conventional,middle,300,279.594,40,294,2.998,2.05,5.691,0.081,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,53,13,conventional,middle,300,294.319,32,387,3.35,2.05,2.114,-1.87,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,54,13,conventional,middle,300,300.129,50,332,2.808,2.05,6.667,-3.821,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,55,14,threadlet,lower,60,55.529,40,213,1.256,2.05,-2.439,-2.52,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,56,14,threadlet,middle,90,72.867,32,145,1.712,2.05,-8.618,4.228,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,57,14,threadlet,lower,60,45.773,26,138,1.465,2.05,0.163,14.065,false,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,58,14,threadlet,middle,90,78.728,20,297,2.303,2.05,-0.488,0.325,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,59,14,threadlet,lower,60,54.257,32,136,1.431,2.05,-4.39,-11.301,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,60,14,threadlet,middle,90,84.609,50,212,1.429,2.05,2.439,1.301,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,61,14,threadlet,lower,60,52.674,20,324,1.861,2.05,-4.065,0.081,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,62,14,threadlet,lower,60,42.915,50,97,0.894,2.05,6.667,-12.276,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,63,14,threadlet,upper,120,97.673,40,213,1.783,2.05,0.163,-5.285,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,64,14,threadlet,lower,60,45.447,64,82,0.774,2.05,3.415,-1.87,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,65,14,threadlet,middle,90,81.63,26,294,2.049,2.05,-0.163,7.48,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,66,14,threadlet,upper,120,108.621,32,236,2.136,2.05,-2.439,-3.984,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,67,14,threadlet,middle,90,73.511,40,131,1.505,2.05,-2.439,3.252,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,68,14,threadlet,upper,120,109.377,50,179,1.672,2.05,4.715,-6.26,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,69,14,threadlet,middle,90,86.538,64,119,1.234,2.05,-14.146,20.813,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,70,14,threadlet,upper,120,104.035,64,141,1.393,2.05,6.341,-19.593,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,71,14,threadlet,upper,120,113.587,26,299,2.425,2.05,-0.813,-0.407,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,72,14,threadlet,upper,120,101.545,20,367,2.603,2.05,-4.065,-1.382,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,73,15,conventional,middle,300,266.913,32,343,3.224,2.05,1.463,-0.894,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,74,15,conventional,upper,420,395.402,40,480,3.444,2.05,7.317,-1.545,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,75,15,conventional,middle,300,297.215,50,260,2.796,2.05,-5.041,28.699,false,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,76,15,conventional,upper,420,426.911,20,512,4.482,2.05,-1.138,2.358,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,77,15,conventional,upper,420,419.763,50,430,3.232,2.05,-8.943,-11.301,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,78,15,conventional,lower,180,179.81,26,332,2.985,2.05,-3.415,12.114,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,79,15,conventional,lower,180,175.854,50,220,2.175,2.05,-6.341,-16.179,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,80,15,conventional,lower,180,166.584,20,463,3.222,2.05,6.341,1.382,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,81,15,conventional,lower,180,147.636,64,226,1.725,2.05,7.642,-13.252,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,82,15,conventional,upper,420,396.668,26,431,4.023,2.05,6.016,-4.146,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,83,15,conventional,middle,300,291.303,20,552,3.96,2.05,2.439,4.309,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,84,15,conventional,middle,300,301.089,40,353,3.092,2.05,5.041,3.984,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,85,15,conventional,upper,420,403.172,32,393,3.765,2.05,-0.813,16.016,false,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,86,15,conventional,upper,420,414.974,64,329,2.904,2.05,-6.667,-19.756,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,87,15,conventional,lower,180,174.261,40,292,2.421,2.05,-4.39,7.561,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,88,15,conventional,middle,300,289.35,26,439,3.6,2.05,1.138,-6.098,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,89,15,conventional,middle,300,278.629,64,351,2.421,2.05,-2.439,-5.122,true,true,
+18625169-c5b0-443c-ae02-484bf19d95ea,3,90,15,conventional,lower,180,158.72,32,386,2.575,2.05,2.764,-2.195,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,1,16,threadlet,middle,90,74.417,50,122,1.315,2.05,9.919,-14.634,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,2,16,threadlet,lower,60,61.171,26,217,1.745,2.05,0.813,-4.472,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,3,16,threadlet,upper,120,113.912,26,258,2.428,2.05,4.39,6.098,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,4,16,threadlet,upper,120,95.427,32,136,1.994,2.05,-4.39,8.049,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,5,16,threadlet,middle,90,81.328,20,364,2.341,2.05,3.089,-0.976,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,6,16,threadlet,middle,90,86.829,26,305,2.118,2.05,2.439,-12.033,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,7,16,threadlet,upper,120,113.294,50,127,1.707,2.05,7.317,7.724,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,8,16,threadlet,lower,60,33.806,40,89,0.884,2.05,-6.016,8.211,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,9,16,threadlet,lower,60,50.116,64,89,0.834,2.05,-1.138,-10.325,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,10,16,threadlet,upper,120,99.595,64,101,1.354,2.05,-2.439,1.87,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,11,16,threadlet,upper,120,119.775,40,239,1.998,2.05,-2.764,-8.862,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,12,16,threadlet,lower,60,45.125,50,100,0.928,2.05,0.813,5.61,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,13,16,threadlet,lower,60,43.511,32,133,1.239,2.05,3.415,-6.098,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,14,16,threadlet,middle,90,90.093,32,378,1.932,2.05,3.74,-8.13,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,15,16,threadlet,middle,90,89.118,64,146,1.258,2.05,-0.813,-10.732,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,16,16,threadlet,upper,120,111.961,20,307,2.722,2.05,3.415,8.699,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,17,16,threadlet,lower,60,47.197,20,279,1.748,2.05,3.415,-1.22,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,18,16,threadlet,middle,90,81.348,40,112,1.601,2.05,-0.813,1.626,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,19,17,conventional,lower,180,174.879,40,461,2.425,2.05,-6.992,4.309,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,20,17,conventional,upper,420,401.222,26,459,4.038,2.05,4.39,-1.545,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,21,17,conventional,upper,420,395.691,20,435,4.377,2.05,-4.715,9.187,false,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,22,17,conventional,lower,180,170.374,20,324,3.251,2.05,-0.488,-7.073,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,23,17,conventional,middle,300,288.407,26,530,3.596,2.05,-2.439,-5.122,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,24,17,conventional,lower,180,179.106,26,456,2.98,2.05,-4.065,-3.496,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,25,17,conventional,lower,180,157.409,32,391,2.565,2.05,8.293,9.187,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,26,17,conventional,middle,300,259.106,40,356,2.903,2.05,2.439,-2.52,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,27,17,conventional,upper,420,418.133,40,426,3.518,2.05,-0.813,4.309,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,28,17,conventional,lower,180,151.808,50,173,2.013,2.05,-6.016,-6.098,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,29,17,conventional,middle,300,300.135,20,396,4.001,2.05,2.439,-0.244,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,30,17,conventional,upper,420,396.717,64,369,2.848,2.05,8.293,-13.252,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,31,17,conventional,middle,300,296.835,32,347,3.361,2.05,-5.691,5.285,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,32,17,conventional,upper,420,413.261,50,466,3.212,2.05,1.463,-6.423,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,33,17,conventional,lower,180,173.3,64,166,1.891,2.05,-6.341,-20.081,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,34,17,conventional,middle,300,293.986,64,287,2.484,2.05,3.089,17.967,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,35,17,conventional,upper,420,394.427,32,441,3.736,2.05,-2.439,17.967,false,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,36,17,conventional,middle,300,304.072,50,424,2.824,2.05,-4.715,-6.098,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,37,18,threadlet,lower,60,49.363,64,98,0.825,2.05,4.39,-17.805,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,38,18,threadlet,lower,60,53.922,40,117,1.231,2.05,-3.089,-13.252,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,39,18,threadlet,lower,60,45.335,20,150,1.708,2.05,-1.463,-4.146,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,40,18,threadlet,lower,60,45.125,26,137,1.452,2.05,3.415,-10.976,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,41,18,threadlet,middle,90,79.045,26,185,2.014,2.05,5.366,11.382,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,42,18,threadlet,upper,120,115.229,40,148,1.956,2.05,-4.715,4.797,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,43,18,threadlet,middle,90,84.947,64,111,1.219,2.05,-5.691,-16.585,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,44,18,threadlet,upper,120,122.707,26,242,2.516,2.05,0.813,1.22,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,45,18,threadlet,upper,120,122.405,20,511,2.832,2.05,-4.065,2.846,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,46,18,threadlet,upper,120,118.136,32,236,2.23,2.05,2.439,-5.935,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,47,18,threadlet,upper,120,114.92,50,132,1.722,2.05,-3.74,-8.862,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,48,18,threadlet,lower,60,60.487,50,122,1.144,2.05,-5.691,-7.073,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,49,18,threadlet,middle,90,80.037,32,169,1.808,2.05,-1.789,8.455,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,50,18,threadlet,middle,90,90.823,40,145,1.71,2.05,0.163,-9.756,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,51,18,threadlet,lower,60,53.944,32,129,1.425,2.05,-4.39,-8.374,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,52,18,threadlet,upper,120,102.196,64,125,1.377,2.05,7.317,-29.024,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,53,18,threadlet,middle,90,82.289,20,393,2.355,2.05,-5.366,1.301,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,54,18,threadlet,middle,90,82.393,50,120,1.405,2.05,-2.439,-12.033,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,55,19,conventional,upper,420,412.284,26,543,4.075,2.05,6.341,-9.024,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,56,19,conventional,lower,180,172.949,50,228,2.157,2.05,-3.415,7.236,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,57,19,conventional,lower,180,170.057,26,335,2.915,2.05,-4.715,-4.146,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,58,19,conventional,upper,420,409.35,20,519,4.424,2.05,-5.041,0.407,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,59,19,conventional,middle,300,297.81,26,523,3.639,2.05,3.089,-1.545,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,60,19,conventional,upper,420,417.807,64,418,2.912,2.05,-4.065,-33.74,false,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,61,19,conventional,middle,300,297.805,20,581,3.99,2.05,-0.488,2.033,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,62,19,conventional,lower,180,146.59,20,366,3.058,2.05,-0.813,-4.472,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,63,19,conventional,lower,180,175.893,64,197,1.906,2.05,-6.341,-4.472,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,64,19,conventional,middle,300,266.591,40,347,2.938,2.05,3.415,8.537,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,65,19,conventional,upper,420,392.449,32,518,3.729,2.05,3.415,-1.545,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,66,19,conventional,upper,420,424.654,50,442,3.247,2.05,2.439,-22.033,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,67,19,conventional,upper,420,388.865,40,538,3.422,2.05,-10.894,2.683,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,68,19,conventional,middle,300,274.391,64,351,2.403,2.05,-8.943,5.285,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,69,19,conventional,middle,300,297.158,32,585,3.363,2.05,3.415,-3.496,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,70,19,conventional,lower,180,175.887,40,390,2.432,2.05,4.715,-10,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,71,19,conventional,middle,300,269.595,50,312,2.676,2.05,21.301,3.659,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,72,19,conventional,lower,180,153.871,32,570,2.538,2.05,0.488,-4.472,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,73,20,threadlet,middle,90,76.224,40,155,1.539,2.05,4.065,1.626,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,74,20,threadlet,lower,60,45.146,26,147,1.452,2.05,1.789,-0.244,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,75,20,threadlet,middle,90,84.001,20,407,2.379,2.05,-6.341,-4.878,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,76,20,threadlet,lower,60,47.399,64,86,0.8,2.05,-1.789,-8.374,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,77,20,threadlet,upper,120,114.904,32,255,2.199,2.05,-0.813,9.675,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,78,20,threadlet,upper,120,117.845,40,244,1.98,2.05,-2.764,-5.935,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,79,20,threadlet,upper,120,123.736,64,141,1.553,2.05,0.488,-9.837,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,80,20,threadlet,upper,120,122.684,26,272,2.516,2.05,-0.488,-2.033,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,81,20,threadlet,middle,90,75.124,50,130,1.323,2.05,-10.894,-1.951,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,82,20,threadlet,lower,60,54.247,50,149,1.06,2.05,-7.317,9.187,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,83,20,threadlet,middle,90,87.265,26,229,2.123,2.05,-6.667,11.382,false,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,84,20,threadlet,lower,60,50.384,40,101,1.176,2.05,-5.691,1.707,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,85,20,threadlet,lower,60,55.203,32,162,1.446,2.05,0.488,0.407,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,86,20,threadlet,middle,90,65.764,64,96,1.02,2.05,-3.74,1.951,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,87,20,threadlet,upper,120,116.084,20,492,2.766,2.05,2.439,1.545,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,88,20,threadlet,upper,120,112.455,50,137,1.7,2.05,-11.22,-16.341,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,89,20,threadlet,middle,90,91.058,32,155,1.943,2.05,-2.439,-7.805,true,true,
+fcb26455-7aa9-4f5e-b2f8-f6c650cba05e,4,90,20,threadlet,lower,60,58.296,20,212,1.969,2.05,-4.715,5.285,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,1,21,conventional,upper,420,401.898,26,476,4.041,2.05,-4.39,-6.098,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,2,21,conventional,lower,180,173.903,64,372,1.894,2.05,-9.919,4.634,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,3,21,conventional,middle,300,291.659,20,447,3.962,2.05,-1.789,-3.821,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,4,21,conventional,lower,180,179.432,40,202,2.456,2.05,3.415,5.61,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,5,21,conventional,lower,180,158.293,50,204,2.059,2.05,-5.041,-20.406,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,6,21,conventional,middle,300,287.151,26,437,3.59,2.05,2.439,-10.65,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,7,21,conventional,lower,180,176.943,32,310,2.707,2.05,-2.439,-4.797,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,8,21,conventional,middle,300,288.719,40,281,3.039,2.05,-2.439,4.959,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,9,21,conventional,upper,420,,50,,,2.05,,,,false,focus_lost
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,10,21,conventional,lower,180,170.006,26,443,2.914,2.05,-1.463,-4.146,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,11,21,conventional,middle,300,284.801,64,290,2.446,2.05,-2.114,-14.553,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,12,21,conventional,lower,180,177.838,20,377,3.306,2.05,1.463,-5.122,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,13,21,conventional,upper,420,422.405,64,422,2.926,2.05,-9.594,6.911,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,14,21,conventional,upper,420,403.853,40,356,3.472,2.05,-3.74,5.935,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,15,21,conventional,middle,300,303.674,50,322,2.822,2.05,4.39,-0.894,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,16,21,conventional,upper,420,406.753,20,398,4.415,2.05,1.463,12.764,false,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,17,21,conventional,middle,300,295.534,32,312,3.356,2.05,0.163,9.837,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,18,21,conventional,upper,420,407.726,32,385,3.78,2.05,9.594,5.935,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,19,21,conventional,upper,420,417.807,50,440,3.226,2.05,-3.089,-15.528,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,20,22,threadlet,middle,90,73.211,20,205,2.221,2.05,4.39,-4.553,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,21,22,threadlet,middle,90,81.684,50,137,1.397,2.05,-2.439,-9.431,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,22,22,threadlet,lower,60,60.456,26,183,1.733,2.05,1.463,1.707,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,23,22,threadlet,upper,120,102.892,50,151,1.613,2.05,5.366,-6.26,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,24,22,threadlet,upper,120,124.34,40,256,2.039,2.05,5.366,-9.187,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,25,22,threadlet,lower,60,46.954,40,120,1.12,2.05,2.114,-9.675,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,26,22,threadlet,upper,120,97.317,32,153,2.015,2.05,4.39,-34.553,false,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,27,22,threadlet,lower,60,45.775,20,219,1.718,2.05,3.415,6.585,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,28,22,threadlet,lower,60,50.84,50,111,1.012,2.05,-1.138,-4.146,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,29,22,threadlet,middle,90,89.809,40,201,1.698,2.05,0.163,-13.333,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,30,22,threadlet,lower,60,48.143,32,128,1.325,2.05,-0.163,3.984,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,31,22,threadlet,lower,60,42.871,64,101,0.74,2.05,2.764,-12.927,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,32,22,threadlet,upper,120,103.251,26,373,2.314,2.05,-4.39,-3.008,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,33,22,threadlet,middle,90,77.102,32,163,1.77,2.05,2.764,-1.626,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,34,22,threadlet,upper,120,110.001,64,129,1.443,2.05,-10.244,-1.707,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,35,22,threadlet,upper,120,98.439,20,386,2.566,2.05,-3.74,4.146,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,36,22,threadlet,middle,90,74.798,64,85,1.117,2.05,0.813,-13.333,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,37,22,threadlet,middle,90,81.959,26,244,2.054,2.05,1.138,-8.455,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,38,23,conventional,upper,420,416.846,50,378,3.223,2.05,-0.813,-14.878,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,39,23,conventional,upper,420,407.085,40,351,3.482,2.05,-10.244,1.707,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,40,23,conventional,upper,420,409.714,26,514,4.067,2.05,1.789,-1.22,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,41,23,conventional,middle,300,290.996,32,383,3.335,2.05,-2.439,14.715,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,42,23,conventional,middle,300,295.004,20,594,3.977,2.05,-1.463,-1.87,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,43,23,conventional,lower,180,173.599,20,482,3.275,2.05,1.789,-6.748,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,44,23,conventional,lower,180,157.022,50,178,2.05,2.05,-14.472,-22.683,false,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,45,23,conventional,middle,300,265.307,50,401,2.657,2.05,4.39,2.683,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,46,23,conventional,lower,180,162.255,64,182,1.822,2.05,-4.065,9.837,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,47,23,conventional,upper,420,399.964,64,341,2.858,2.05,6.341,-7.073,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,48,23,conventional,middle,300,296.919,64,294,2.496,2.05,-1.463,13.74,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,49,23,conventional,upper,420,392.464,32,519,3.729,2.05,1.463,-4.797,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,50,23,conventional,lower,180,178.827,26,426,2.978,2.05,2.764,-3.171,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,51,23,conventional,lower,180,150.572,40,230,2.252,2.05,1.789,-1.22,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,52,23,conventional,upper,420,407.097,20,467,4.416,2.05,1.138,1.057,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,53,23,conventional,lower,180,170.002,32,216,2.658,2.05,5.366,-9.024,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,54,23,conventional,middle,300,303.343,40,474,3.102,2.05,-3.415,-4.797,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,55,23,conventional,middle,300,291.98,26,388,3.612,2.05,-6.016,-10.65,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,56,24,threadlet,middle,90,83.869,26,184,2.079,2.05,5.366,9.106,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,57,24,threadlet,lower,60,58.783,64,81,0.94,2.05,-0.813,-4.797,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,58,24,threadlet,lower,60,40.897,26,129,1.363,2.05,1.789,8.537,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,59,24,threadlet,upper,120,115.612,40,177,1.96,2.05,-3.74,14.553,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,60,24,threadlet,upper,120,110.671,32,238,2.157,2.05,8.943,-7.236,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,61,24,threadlet,middle,90,70.244,32,129,1.676,2.05,0.813,-15.285,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,62,24,threadlet,middle,90,83.647,50,114,1.418,2.05,0.163,-4.878,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,63,24,threadlet,upper,120,107.724,20,279,2.675,2.05,0.813,-3.659,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,64,24,threadlet,upper,120,113.587,50,119,1.71,2.05,-1.463,2.195,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,65,24,threadlet,upper,120,102.196,26,210,2.302,2.05,3.089,-9.187,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,66,24,threadlet,lower,60,59.529,50,112,1.131,2.05,-2.439,-16.829,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,67,24,threadlet,middle,90,65.368,20,186,2.094,2.05,1.789,0.976,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,68,24,threadlet,lower,60,61.431,40,108,1.342,2.05,-7.642,12.764,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,69,24,threadlet,lower,60,41.908,32,93,1.208,2.05,-0.813,0.732,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,70,24,threadlet,middle,90,71.951,40,89,1.485,2.05,0.488,-10.407,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,71,24,threadlet,upper,120,116.952,64,104,1.499,2.05,2.114,3.171,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,72,24,threadlet,middle,90,80.976,64,86,1.18,2.05,-7.642,-0.65,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,73,24,threadlet,lower,60,46.762,20,121,1.739,2.05,-6.667,7.886,false,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,74,25,conventional,middle,300,308.555,64,243,2.541,2.05,-3.089,-16.829,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,75,25,conventional,upper,420,410.99,32,500,3.791,2.05,0.488,-10.976,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,76,25,conventional,upper,420,396.992,20,415,4.382,2.05,0.488,-1.87,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,77,25,conventional,middle,300,285.13,32,500,3.309,2.05,-2.114,-4.146,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,78,25,conventional,lower,180,169.047,40,269,2.386,2.05,2.439,-18.455,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,79,25,conventional,lower,180,164.797,64,120,1.838,2.05,-1.789,-22.358,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,80,25,conventional,upper,420,398.333,40,536,3.454,2.05,-3.089,-0.569,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,81,25,conventional,middle,300,304.634,50,1023,2.826,2.05,2.439,-7.073,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,82,25,conventional,lower,180,161.243,20,292,3.18,2.05,1.789,-3.171,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,83,25,conventional,middle,300,271.141,20,389,3.864,2.05,-1.138,-0.894,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,84,25,conventional,middle,300,297.821,40,427,3.078,2.05,-7.317,3.659,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,85,25,conventional,middle,300,279.039,26,377,3.552,2.05,7.317,-2.195,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,86,25,conventional,upper,420,388.213,64,285,2.821,2.05,10.894,-34.065,false,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,87,25,conventional,lower,180,149.514,26,278,2.755,2.05,4.39,-8.049,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,88,25,conventional,upper,420,420.441,50,435,3.234,2.05,-6.667,-0.894,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,89,25,conventional,upper,420,393.089,26,457,4.011,2.05,-0.488,4.634,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,90,25,conventional,lower,180,178.482,32,320,2.718,2.05,-6.341,-10,true,true,
+0a79b9a6-c77d-4074-b9c6-bee6c14380fe,5,91,25,conventional,lower,180,168.238,50,234,2.126,2.05,0.488,6.585,true,true,`;
+const VIDEO_EMBED_URL = `https://www.youtube.com/embed/99tKqd0xuhU`;
+</script>
+
+<script id="study-core">
+'use strict';
+const StudyCore = (() => {
+  const WIDTHS = Object.freeze([20, 26, 32, 40, 50, 64]);
+  const BLOCK_SIZE = 18;
+  const BLOCKS_PER_RUN = 5;
+  const TOTAL_RUNS = 5;
+  const RUN_TRIALS = BLOCK_SIZE * BLOCKS_PER_RUN;
+  const GRAND_TOTAL = RUN_TRIALS * TOTAL_RUNS;
+  const STORAGE_KEY = 'threadlet-study-v2';
+  const PASSAGES = Object.freeze([
+    Object.freeze({ id:'upper', y:70, local:120, title:'Learning from examples', lines:['A model learns patterns from its training examples.','A good fit captures useful patterns, not every detail.'], reply:'Learn the pattern, not the exact examples.' }),
+    Object.freeze({ id:'middle', y:190, local:90, title:'When a model overfits', lines:['Overfitting happens when a model learns details','that do not carry over to new examples.'], reply:'Memorizing examples can hurt on new ones.' }),
+    Object.freeze({ id:'lower', y:310, local:60, title:'Checking generalization', lines:['Held-out examples help check whether the model','can apply what it learned to unfamiliar data.'], reply:'Test on examples the model has not seen.' })
+  ]);
+  const CSV_COLUMNS = Object.freeze(['session_id','run','trial','block','layout','passage','A_nominal','A','W','MT','ID','scale','click_dx','click_dy','hit','valid','invalid_reason']);
+  const START_RADIUS = 12;
+  const distance = (a,b) => Math.hypot(a.x-b.x, a.y-b.y);
+
+  function shuffle(items, random) {
+    const result = items.slice();
+    for (let i=result.length-1; i>0; i--) { const j=Math.floor(random()*(i+1)); [result[i],result[j]]=[result[j],result[i]]; }
+    return result;
+  }
+  function geometry(condition) {
+    const passage = PASSAGES.find(p=>p.id===condition.passage);
+    const start = {x:650, y:passage.y};
+    const target = {x:650, y:condition.layout==='threadlet' ? passage.y+passage.local : 490};
+    return {start, target, W:condition.W, A_nominal:distance(start,target), passage};
+  }
+  function makeBlocks(random, runIndex=0, startLayout='threadlet') {
+    const second = startLayout==='threadlet' ? 'conventional' : 'threadlet';
+    const blocks = [];
+    for (let i=0; i<BLOCKS_PER_RUN; i++) {
+      const globalIndex = runIndex*BLOCKS_PER_RUN + i;
+      const layout = globalIndex%2===0 ? startLayout : second;
+      const number = globalIndex+1;
+      const cells = PASSAGES.flatMap(p=>WIDTHS.map(W=>({layout, passage:p.id, W, block:number, run:runIndex+1})));
+      blocks.push({layout, number, run:runIndex+1, conditions:shuffle(cells, random)});
+    }
+    return blocks;
+  }
+  function csv(rows) {
+    const field = value => {
+      if (value===null || value===undefined) return '';
+      const text = typeof value==='number' ? String(Math.round(value*1000)/1000) : String(value);
+      return /[",\r\n]/.test(text) ? '"'+text.replace(/"/g,'""')+'"' : text;
+    };
+    return CSV_COLUMNS.join(',')+'\r\n'+rows.map(row=>CSV_COLUMNS.map(key=>field(row[key])).join(',')).join('\r\n')+'\r\n';
+  }
+  function summarize(rows, layout) {
+    const valid = rows.filter(row=>row.layout===layout && row.valid);
+    const hits = valid.filter(row=>row.hit);
+    return {valid:valid.length, hits:hits.length, rate:valid.length?hits.length/valid.length:null, mean:hits.length?hits.reduce((s,r)=>s+r.MT,0)/hits.length:null};
+  }
+
+  class Experiment {
+    constructor({random=Math.random, clock=()=>performance.now(), sessionId, runIndex=0, startLayout='threadlet', scale=1}={}) {
+      this.clock = clock;
+      this.scale = scale;
+      this.runIndex = runIndex;
+      this.run = runIndex+1;
+      this.sessionId = sessionId || (globalThis.crypto?.randomUUID?.() ?? 'session-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10));
+      this.blocks = makeBlocks(random, runIndex, startLayout);
+      this.records = []; this.practiceRecords = [];
+      this.state = 'idle'; this.stage = 'practice'; this.blockIndex = -1;
+      this.queue = []; this.queueIndex = 0; this.releasePoint = null; this.onset = null; this.movementStart = null; this.lastRecord = null;
+    }
+    get current() { return this.queue[this.queueIndex] || null; }
+    get rows() { return this.stage==='practice' ? this.practiceRecords : this.records; }
+    get measuredCount() { return this.records.filter(r=>r.valid).length; }
+    get practiceCount() { return this.practiceRecords.filter(r=>r.valid).length; }
+    get isActive() { return ['ready','pressing','armed','moving'].includes(this.state); }
+    startPractice() {
+      if (this.state!=='idle') return;
+      const practiceWidths = [WIDTHS[0], WIDTHS[2], WIDTHS[WIDTHS.length-1]];
+      this.queue = ['threadlet','conventional'].flatMap(layout=>PASSAGES.map((p,i)=>({layout, passage:p.id, W:practiceWidths[i], block:0, run:0})));
+      this.queueIndex = 0; this.prepare();
+    }
+    prepare() { this.releasePoint=null; this.onset=null; this.movementStart=null; this.state='ready'; }
+    pointerDown(point) {
+      if (!this.current) return;
+      const g = geometry(this.current);
+      if ((this.state==='ready'||this.state==='armed') && distance(point,g.start)<=START_RADIUS) { this.state='pressing'; return; }
+      if (this.state==='armed') { this.interrupt('missing_movement_sample'); return; }
+      if (this.state!=='moving') return;
+      const row = this.makeRecord(true,'',distance(point,g.target)<=g.W/2,point);
+      this.rows.push(row); this.lastRecord=row; this.state='feedback';
+    }
+    pointerUp(point) {
+      if (this.state!=='pressing') return;
+      if (distance(point,geometry(this.current).start)>START_RADIUS) { this.state='ready'; return; }
+      this.releasePoint = {...point}; this.state='armed';
+    }
+    pointerMove(point, buttons=0) {
+      if (this.state!=='armed' || buttons!==0 || distance(point,this.releasePoint)<2) return;
+      this.onset = {...point}; this.movementStart = this.clock(); this.state='moving';
+    }
+    makeRecord(valid, reason, hit=null, click=null) {
+      const g = geometry(this.current);
+      const A = this.onset ? distance(this.onset,g.target) : null;
+      return {session_id:this.sessionId, run:this.current.run ?? this.run, trial:this.rows.length+1, block:this.current.block, layout:this.current.layout, passage:this.current.passage,
+              A_nominal:g.A_nominal, A, W:g.W, MT:valid?Math.max(0,this.clock()-this.movementStart):null,
+              ID:A===null?null:Math.log2(1+A/g.W), scale:this.scale,
+              click_dx:click?click.x-g.target.x:null, click_dy:click?click.y-g.target.y:null,
+              hit, valid, invalid_reason:reason};
+    }
+    interrupt(reason) {
+      if (!this.isActive) return false;
+      const row = this.makeRecord(false,reason);
+      this.rows.push(row); this.lastRecord=row;
+      this.queue.push({...this.current}); this.queueIndex++;
+      this.state='interrupted'; return true;
+    }
+    resume() { if (this.state==='interrupted') this.prepare(); }
+    advance() {
+      if (this.state!=='feedback') return;
+      this.queueIndex++;
+      if (this.queueIndex<this.queue.length) { this.prepare(); return; }
+      this.state = this.stage==='measured' && this.blockIndex===this.blocks.length-1 ? 'complete' : 'break';
+    }
+    nextBlock() {
+      if (this.state!=='break') return;
+      if (this.stage==='practice') { this.stage='measured'; this.blockIndex=0; } else this.blockIndex++;
+      this.queue = this.blocks[this.blockIndex].conditions.map(c=>({...c})); this.queueIndex=0; this.prepare();
+    }
+  }
+  const Store = {
+    read() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    },
+    write(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); return data; },
+    init() { return this.read() || this.write({rows:[], runsDone:0, startLayout:Math.random()<.5?'threadlet':'conventional'}); },
+    addRun(rows) {
+      const data = this.read();
+      data.rows = data.rows.concat(rows);
+      data.runsDone += 1;
+      return this.write(data);
+    },
+    clear() { localStorage.removeItem(STORAGE_KEY); }
+  };
+
+  return Object.freeze({WIDTHS, PASSAGES, CSV_COLUMNS, START_RADIUS, BLOCK_SIZE, BLOCKS_PER_RUN,
+                        TOTAL_RUNS, RUN_TRIALS, GRAND_TOTAL, STORAGE_KEY,
+                        distance, geometry, makeBlocks, csv, summarize, Store, Experiment});
+})();
+</script>
+
+<script id="analysis">
+'use strict';
+const Analysis = (() => {
+  const PALETTE = {threadlet:'#2563eb', conventional:'#eb6834'};
+  const NAME = {threadlet:'Threadlet', conventional:'Conventional'};
+
+  function parseCSV(text) {
+    const clean = text.replace(/^﻿/,'').trim();
+    if (!clean) return [];
+    const rows = []; let row = []; let field = ''; let quoted = false;
+    for (let i=0; i<clean.length; i++) {
+      const ch = clean[i];
+      if (quoted) {
+        if (ch==='"' && clean[i+1]==='"') { field+='"'; i++; }
+        else if (ch==='"') quoted = false;
+        else field += ch;
+      } else if (ch==='"') quoted = true;
+      else if (ch===',') { row.push(field); field=''; }
+      else if (ch==='\r') { /* skip */ }
+      else if (ch==='\n') { row.push(field); rows.push(row); row=[]; field=''; }
+      else field += ch;
+    }
+    row.push(field); rows.push(row);
+    const header = rows.shift().map(h=>h.trim());
+    return rows.filter(r=>r.length===header.length && r.some(v=>v!=='')).map(r=>Object.fromEntries(header.map((h,i)=>[h,r[i]])));
+  }
+
+  const num = v => { const t=String(v ?? '').trim(); if (t==='') return null; const n=Number(t); return Number.isFinite(n)?n:null; };
+  const bool = v => String(v ?? '').trim().toLowerCase()==='true';
+
+  function normalise(rows) {
+    return rows.map(r => ({
+      layout: r.layout, passage: r.passage,
+      A: num(r.A), W: num(r.W), MT: num(r.MT), ID: num(r.ID),
+      click_dx: num(r.click_dx), click_dy: num(r.click_dy),
+      hit: r.hit===true || r.hit==='true',
+      valid: r.valid===true || r.valid==='true'
+    }));
+  }
+
+  function audit(rows) {
+    const valid = rows.filter(r=>r.valid);
+    const hits = valid.filter(r=>r.hit && r.MT!==null && r.ID!==null);
+    return {attempts:rows.length, valid:valid.length, invalid:rows.length-valid.length,
+            hits:hits.length, misses:valid.length-valid.filter(r=>r.hit).length, hitRows:hits};
+  }
+
+  function conditionMeans(hits) {
+    const cells = new Map();
+    for (const r of hits) {
+      const key = `${r.layout}|${r.passage}|${r.W}`;
+      if (!cells.has(key)) cells.set(key, {layout:r.layout, passage:r.passage, W:r.W, A:0, ID:0, MT:0, n:0});
+      const cell = cells.get(key);
+      cell.A += r.A; cell.ID += r.ID; cell.MT += r.MT; cell.n++;
+    }
+    const order = {upper:0, middle:1, lower:2};
+    return [...cells.values()].map(c=>({...c, A:c.A/c.n, ID:c.ID/c.n, MT:c.MT/c.n}))
+      .sort((a,b)=> a.layout.localeCompare(b.layout) || order[a.passage]-order[b.passage] || a.W-b.W);
+  }
+
+  function ols(points) {
+    const n = points.length;
+    if (n < 3) return null;
+    const mx = points.reduce((s,p)=>s+p[0],0)/n, my = points.reduce((s,p)=>s+p[1],0)/n;
+    let sxx=0, syy=0, sxy=0;
+    for (const [x,y] of points) { sxx+=(x-mx)**2; syy+=(y-my)**2; sxy+=(x-mx)*(y-my); }
+    if (sxx===0) return null;
+    const b = sxy/sxx, a = my - b*mx;
+    const sse = points.reduce((s,[x,y])=>s+(y-(a+b*x))**2, 0);
+    return {n, a, b, r2: syy>0 ? (sxy*sxy)/(sxx*syy) : NaN,
+            seB: n>2 ? Math.sqrt((sse/(n-2))/sxx) : NaN,
+            rmse: Math.sqrt(sse/n), throughput: b>0 ? 1000/b : NaN};
+  }
+
+  function niceTicks(lo, hi, target) {
+    if (hi <= lo) hi = lo + 1;
+    const raw = (hi-lo)/Math.max(target,2), mag = 10**Math.floor(Math.log10(raw));
+    let step = mag;
+    for (const m of [1,2,2.5,5,10]) { step = m*mag; if (step>=raw) break; }
+    const start = Math.floor(lo/step)*step, ticks = [];
+    for (let i=0; ; i++) { const v = start+i*step; ticks.push(Math.round(v*1e10)/1e10); if (v >= hi-1e-9) break; }
+    return ticks;
+  }
+
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const trim = (v,p=1) => { const t=v.toFixed(p); return t.includes('.') ? t.replace(/0+$/,'').replace(/\.$/,'') : t; };
+
+  function scatterSVG(cells, fit) {
+    const W=900, H=560, L=84, R=26, T=64, B=62, pw=W-L-R, ph=H-T-B;
+    const xs = cells.map(c=>c.ID), ys = cells.map(c=>c.MT);
+    const xt = niceTicks(Math.min(...xs), Math.max(...xs), 7);
+    const yt = niceTicks(Math.min(...ys), Math.max(...ys), 6);
+    const xlo=Math.min(xt[0],...xs), xhi=Math.max(xt[xt.length-1],...xs);
+    const ylo=Math.min(yt[0],...ys), yhi=Math.max(yt[yt.length-1],...ys);
+    const sx = v => L + (v-xlo)/(xhi-xlo)*pw;
+    const sy = v => T + ph - (v-ylo)/(yhi-ylo)*ph;
+    const p = [];
+    p.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" role="img" font-family="Georgia,'Times New Roman',serif" aria-label="Scatter plot of mean movement time against index of difficulty, with a fitted least-squares regression line.">`);
+    p.push(`<rect width="${W}" height="${H}" fill="#fff"/>`);
+    p.push(`<text x="${L}" y="34" font-size="18" font-weight="600" fill="#0b0b0b">Movement time against difficulty</text>`);
+    for (const t of yt) {
+      p.push(`<line x1="${L}" y1="${sy(t).toFixed(1)}" x2="${L+pw}" y2="${sy(t).toFixed(1)}" stroke="#e8e8e5"/>`);
+      p.push(`<text x="${L-12}" y="${(sy(t)+4).toFixed(1)}" font-size="12" fill="#52514e" text-anchor="end">${trim(t,0)}</text>`);
+    }
+    for (const t of xt) {
+      p.push(`<line x1="${sx(t).toFixed(1)}" y1="${T+ph}" x2="${sx(t).toFixed(1)}" y2="${T+ph+6}" stroke="#7a7973"/>`);
+      p.push(`<text x="${sx(t).toFixed(1)}" y="${T+ph+24}" font-size="12" fill="#52514e" text-anchor="middle">${trim(t,1)}</text>`);
+    }
+    p.push(`<line x1="${L}" y1="${T+ph}" x2="${L+pw}" y2="${T+ph}" stroke="#7a7973"/>`);
+    p.push(`<text x="${(L+pw/2).toFixed(1)}" y="${T+ph+48}" font-size="13" fill="#52514e" text-anchor="middle">Index of difficulty (bits)</text>`);
+    p.push(`<text transform="translate(26,${(T+ph/2).toFixed(1)}) rotate(-90)" font-size="13" fill="#52514e" text-anchor="middle">Movement time (ms)</text>`);
+    const fitLo=Math.min(...xs), fitHi=Math.max(...xs);
+    p.push(`<line x1="${sx(fitLo).toFixed(1)}" y1="${sy(fit.a+fit.b*fitLo).toFixed(1)}" x2="${sx(fitHi).toFixed(1)}" y2="${sy(fit.a+fit.b*fitHi).toFixed(1)}" stroke="#52514e" stroke-width="2" stroke-linecap="round"/>`);
+    for (const c of cells) {
+      p.push(`<circle cx="${sx(c.ID).toFixed(1)}" cy="${sy(c.MT).toFixed(1)}" r="6" fill="${PALETTE[c.layout]}" stroke="#fff" stroke-width="2"><title>${esc(`${NAME[c.layout]} · ${c.passage} · A=${trim(c.A)} px, W=${trim(c.W,0)} px, ID=${trim(c.ID,2)} bits, mean MT=${trim(c.MT,0)} ms (n=${c.n})`)}</title></circle>`);
+    }
+    const lx = L+pw-196, ly = T+ph-52;
+    p.push(`<rect x="${lx-12}" y="${ly-4}" width="182" height="46" rx="6" fill="#fff" fill-opacity="0.92" stroke="#e8e8e5"/>`);
+    ['threadlet','conventional'].forEach((layout,i)=>{
+      const y = ly+14+i*19;
+      p.push(`<circle cx="${lx}" cy="${y-4}" r="5.5" fill="${PALETTE[layout]}"/>`);
+      p.push(`<text x="${lx+12}" y="${y}" font-size="12" fill="#52514e">${NAME[layout]}</text>`);
+    });
+    p.push(`<text x="${L+14}" y="${T+30}" font-size="13.5" fill="#0b0b0b">MT = ${trim(fit.a,1)} ${fit.b>=0?'+':'&#8722;'} ${trim(Math.abs(fit.b),1)} &#183; ID ms</text>`);
+    p.push(`<text x="${L+14}" y="${T+50}" font-size="13" fill="#52514e">R<tspan baseline-shift="super" font-size="9.5">2</tspan> = ${fit.r2.toFixed(3)}</text>`);
+    p.push('</svg>');
+    return p.join('');
+  }
+
+  function tableHTML(cells) {
+    const body = cells.map(c=>`<tr><td><span class="swatch ${c.layout==='threadlet'?'sw-t':'sw-c'}"></span>${NAME[c.layout]}</td><td>${c.passage}</td><td>${c.A.toFixed(1)}</td><td>${c.W.toFixed(0)}</td><td>${c.ID.toFixed(2)}</td><td>${c.MT.toFixed(0)}</td><td>${c.n}</td></tr>`).join('');
+    return `<div class="scroll"><table><thead><tr><th>Button position</th><th>Paragraph</th><th>Distance A (px)</th><th>Size W (px)</th><th>Difficulty ID (bits)</th><th>Average time (ms)</th><th>Clicks</th></tr></thead><tbody>${body}</tbody></table></div>`;
+  }
+
+  function render(rawRows) {
+    const rows = normalise(rawRows);
+    const a = audit(rows);
+    const cells = conditionMeans(a.hitRows);
+    const fit = ols(cells.map(c=>[c.ID, c.MT]));
+    if (!fit) return null;
+    const perLayout = {};
+    for (const layout of ['threadlet','conventional']) {
+      perLayout[layout] = ols(cells.filter(c=>c.layout===layout).map(c=>[c.ID,c.MT]));
+    }
+    const scatter = new Map();
+    for (const r of rows) {
+      if (!r.valid || r.click_dy===null) continue;
+      const key = `${r.layout}|${r.passage}|${r.W}`;
+      if (!scatter.has(key)) scatter.set(key, []);
+      scatter.get(key).push(r.click_dy);
+    }
+    const effective = [];
+    for (const c of cells) {
+      const d = scatter.get(`${c.layout}|${c.passage}|${c.W}`);
+      if (!d || d.length < 3) continue;
+      const m = d.reduce((s,v)=>s+v,0)/d.length;
+      const sd = Math.sqrt(d.reduce((s,v)=>s+(v-m)*(v-m),0)/(d.length-1));
+      if (sd > 0) effective.push({...c, We:4.133*sd, IDe:Math.log2(1+c.A/(4.133*sd))});
+    }
+    const effFit = effective.length>=3 ? ols(effective.map(c=>[c.IDe,c.MT])) : null;
+    const minID = Math.min(...cells.map(c=>c.ID)), maxID = Math.max(...cells.map(c=>c.ID));
+    const meanWe = effective.length ? effective.reduce((s,c)=>s+c.We,0)/effective.length : null;
+    const html = `
+      <div class="stats">
+        <div class="stat"><b>${a.hits}</b><span>clicks that hit</span></div>
+        <div class="stat"><b>${a.misses}</b><span>misses, kept in the data</span></div>
+        <div class="stat"><b>${a.invalid}</b><span>attempts thrown out</span></div>
+        <div class="stat"><b>${fit.r2.toFixed(3)}</b><span>R² &mdash; how well the line fits</span></div>
+      </div>
+      <h3>The formula</h3>
+      <div class="formula">MT = ${trim(fit.a,1)} ${fit.b>=0?'+':'−'} ${trim(Math.abs(fit.b),1)} · log₂(1 + A/W) &nbsp;ms
+        <small>Fitted to the ${fit.n} combinations · b = ${trim(fit.b,1)} ± ${trim(fit.seB,1)} ms per bit · ${trim(fit.throughput,2)} bits per second · typical error ${trim(fit.rmse,0)} ms.
+        Fitted separately: Threadlet R² = ${perLayout.threadlet?perLayout.threadlet.r2.toFixed(3):'—'}, Conventional R² = ${perLayout.conventional?perLayout.conventional.r2.toFixed(3):'—'}.${effFit?`
+        <br>Corrected for where the clicks actually landed: MT = ${trim(effFit.a,1)} ${effFit.b>=0?'+':'−'} ${trim(Math.abs(effFit.b),1)} · IDe, R² = ${effFit.r2.toFixed(3)}, ${trim(effFit.throughput,2)} bits per second. Average effective button size ${trim(meanWe,1)} units.`:''}</small>
+      </div>
+      <p class="fine"><strong>a = ${trim(fit.a,1)} ms. b = ${trim(fit.b,1)} ms per bit.</strong> Difficulty measured: ${trim(minID,2)} to ${trim(maxID,2)} bits. Zero difficulty was not measured; <em>a</em> falls outside the measured range.</p>
+      <h3>Chart</h3>
+      <figure>${scatterSVG(cells, fit)}
+        <figcaption>Each point is one of the ${fit.n} combinations, averaged over successful clicks.</figcaption>
+      </figure>
+      <h3>Average time for each combination</h3>
+      ${tableHTML(cells)}
+      <p class="fine" style="margin-top:12px">A is measured from where the mouse started moving, so it differs from the nominal 420/300/180 and 120/90/60. The two button positions sit at different distances by design and so cover different parts of the difficulty range.</p>`;
+    return {html, fit, audit:a, cells, effFit, effective};
+  }
+
+  return {parseCSV, render, ols, conditionMeans, niceTicks, normalise, audit, scatterSVG};
+})();
+</script>
+
+<script id="study-ui">
+(() => {
+  const $ = id => document.getElementById(id);
+  const canvas = $('experiment'), ctx = canvas.getContext('2d');
+  const labels = {threadlet:'Threadlet', conventional:'Conventional'};
+  const TOTAL = StudyCore.RUN_TRIALS;
+  let study=null, feedbackTimer=null, feedbackPending=false, renderedScale=0;
+  const displayScale = () => Math.max(1, Math.min(2.5, Math.floor(Math.min((innerWidth-40)/900, (innerHeight-160)/560)*20)/20));
+  let scale = displayScale();
+  let bank = StudyCore.Store.init();
+  const viewIds = ['intro-view','play-view','panel-view'];
+  const viewportOK = () => innerWidth>=960 && innerHeight>=720;
+  const canContinue = () => viewportOK() && !document.hidden && document.hasFocus();
+  function showView(id) { for (const name of viewIds) $(name).hidden = name!==id; }
+  function point(event) { const r=canvas.getBoundingClientRect(); return {x:(event.clientX-r.left)*900/r.width, y:(event.clientY-r.top)*560/r.height}; }
+  function rounded(x,y,w,h,r,fill,stroke) { ctx.beginPath(); ctx.roundRect(x,y,w,h,r); if(fill){ctx.fillStyle=fill;ctx.fill();} if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();} }
+  function text(value,x,y,size=16,color='#17253c',weight=400) { ctx.font=`${weight} ${size}px system-ui,-apple-system,"Segoe UI",sans-serif`; ctx.fillStyle=color; ctx.fillText(value,x,y); }
+  function wrap(value,x,y,maxWidth,size=14,color='#17253c',lineHeight=21,weight=400) {
+    ctx.font=`${weight} ${size}px system-ui,-apple-system,"Segoe UI",sans-serif`;
+    let line='';
+    for (const word of value.split(' ')) { const next=line?line+' '+word:word; if (line && ctx.measureText(next).width>maxWidth) { text(line,x,y,size,color,weight); y+=lineHeight; line=word; } else line=next; }
+    if (line) text(line,x,y,size,color,weight); return y;
+  }
+  function draw() {
+    if (!study?.current) return;
+    const dpr = devicePixelRatio||1, unit = dpr*scale;
+    if (renderedScale!==unit) {
+      canvas.width=Math.round(900*unit); canvas.height=Math.round(560*unit);
+      canvas.style.width=Math.round(900*scale)+'px'; canvas.style.height=Math.round(560*scale)+'px';
+      $('play-view').style.width=(Math.round(900*scale)+2)+'px';
+      renderedScale=unit;
+    }
+    ctx.setTransform(unit,0,0,unit,0,0); ctx.clearRect(0,0,900,560);
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,900,560);
+    const condition=study.current, g=StudyCore.geometry(condition), active=study.state==='armed'||study.state==='moving';
+    text('YOU ASKED',32,20,12,'#65748a',750);
+    text('Why can a model fit training data but struggle with new examples?',112,20,12,'#63738a');
+    for (const p of StudyCore.PASSAGES) {
+      const selected=p.id===condition.passage, top=p.y-36;
+      rounded(32,top,574,90,9,selected?'#eff5ff':'#f8fafc',selected?'#b5ccfa':'#eaf0f6');
+      if (selected) {
+        ctx.fillStyle='#2563eb'; ctx.fillRect(32,top+13,3,64);
+        ctx.font='16px system-ui,-apple-system,"Segoe UI",sans-serif';
+        rounded(45,top+33,ctx.measureText(p.lines[0]).width+8,21,4,'#c9deff',null);
+      }
+      text(p.title,49,top+21,12,selected?'#2859b0':'#65748a',650);
+      text(p.lines[0],49,top+47,16,'#26374f'); text(p.lines[1],49,top+70,16,'#26374f');
+    }
+    rounded(32,434,836,98,12,'#f8fafc','#e1e7f0');
+    text('FOLLOW-UP',49,456,12,'#718096',700);
+    rounded(49,469,553,43,8,'#fff','#dfe6ef');
+    text('Ask about the selected passage…',64,496,14,'#8490a2');
+    text('Simulated conversation · No typing required',49,549,12,'#7b8798');
+    ctx.beginPath(); ctx.moveTo(608,g.start.y); ctx.lineTo(637,g.start.y); ctx.strokeStyle=active?'#8fb3f4':'#c2d2e8'; ctx.lineWidth=2; ctx.setLineDash([3,3]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(g.start.x,g.start.y,StudyCore.START_RADIUS,0,Math.PI*2); ctx.fillStyle=active?'#e8effe':'#fff'; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle=active?'#2563eb':'#74849d'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(g.start.x,g.start.y,3,0,Math.PI*2); ctx.fillStyle=active?'#2563eb':'#74849d'; ctx.fill();
+    text(active?'SELECTED':'THIS PART',677,g.start.y+4,12,active?'#5270a3':'#64748b',650);
+    const k=g.W/40;
+    ctx.beginPath(); ctx.arc(g.target.x,g.target.y,g.W/2,0,Math.PI*2); ctx.fillStyle='#2563eb'; ctx.fill();
+    ctx.save(); ctx.translate(g.target.x,g.target.y); ctx.scale(k,k); ctx.beginPath(); ctx.moveTo(-7,-7); ctx.lineTo(7,-7); ctx.quadraticCurveTo(9,-7,9,-5); ctx.lineTo(9,4); ctx.quadraticCurveTo(9,6,7,6); ctx.lineTo(-1,6); ctx.lineTo(-6,10); ctx.lineTo(-6,6); ctx.lineTo(-7,6); ctx.quadraticCurveTo(-9,6,-9,4); ctx.lineTo(-9,-5); ctx.quadraticCurveTo(-9,-7,-7,-7); ctx.strokeStyle='white'; ctx.lineWidth=1.7; ctx.lineJoin='round'; ctx.stroke();
+    for (const x of [-4,0,4]) { ctx.beginPath(); ctx.arc(x,-.5,.9,0,Math.PI*2); ctx.fillStyle='white'; ctx.fill(); } ctx.restore();
+    text('ASK ABOUT THIS',g.target.x+g.W/2+13,g.target.y+4,12,'#456493',650);
+    if (study.state==='feedback') {
+      const hit=study.lastRecord.hit;
+      if (hit) {
+        const local=condition.layout==='threadlet', boxX=local?680:390, boxY=local?Math.min(g.target.y+21,410):351, boxW=local?199:462;
+        rounded(boxX,boxY,boxW,local?120:73,10,'#f0f7ff','#a8c6f7');
+        text(local?'PASSAGE FOLLOW-UP':'FOLLOW-UP IN CHAT',boxX+13,boxY+21,12,'#3669b3',750);
+        text('Explain this part simply.',boxX+13,boxY+42,12,'#4c6280');
+        wrap(g.passage.reply,boxX+13,boxY+64,boxW-26,13,'#244064',19,500);
+      } else {
+        rounded(690,380,187,42,8,'#fff4ed','#f5cbb3'); text('Miss recorded. Keep going.',702,405,12,'#9c542f',600);
+      }
+    }
+  }
+  function progress() {
+    const practice=study.stage==='practice';
+    const count=practice?study.practiceCount:study.measuredCount;
+    $('block-label').textContent = practice ? 'Practice' : `Run ${study.run} of ${StudyCore.TOTAL_RUNS} · block ${study.blockIndex+1} of ${StudyCore.BLOCKS_PER_RUN}`;
+    $('layout-badge').textContent = labels[study.current.layout];
+    const passage = StudyCore.geometry(study.current).passage;
+    canvas.setAttribute('aria-label',`${labels[study.current.layout]} layout. Selected passage: ${passage.id}. ${passage.title}. Click the marker beside the highlighted part, then move to the blue ask button and click it.`);
+    $('progress-label').textContent = `${count} / ${practice?6:TOTAL} completed`;
+    $('study-progress').max = practice?6:TOTAL; $('study-progress').value = count;
+    $('phase-note').textContent = practice ? 'Practice — not saved' : 'Mouse only';
+    const messages = {ready:'Click the marker beside the highlighted part of the paragraph.', pressing:'Let go of the mouse button.', armed:'Ready. Move to the blue button and click it.', moving:'Click the blue button.', feedback:study.lastRecord?.hit?'Nice one.':'Missed. Aim for the blue circle.'};
+    $('trial-status').textContent = messages[study.state] || '';
+  }
+  function metric(value,label) { const d=document.createElement('div'); const s=document.createElement('div'); s.className='metric-value'; s.textContent=value; const c=document.createElement('div'); c.className='metric-label'; c.textContent=label; d.append(s,c); return d; }
+  function renderPanel() {
+    showView('panel-view');
+    $('panel-metrics').hidden=true; $('export-status').textContent='';
+    $('continue-button').hidden=false; $('continue-button').disabled=!viewportOK();
+    $('export-button').hidden = bank.rows.length+study.records.length===0;
+    $('export-button').textContent = 'Save all my data (CSV)';
+    $('practice-export').hidden = study.practiceRecords.length===0;
+    if (study.state==='interrupted') {
+      const reasons={focus_lost:'You clicked away from this window.', viewport_changed:'The window changed size or zoom.', pointer_cancelled:'The mouse action was cancelled.', unsupported_pointer:'That was not a mouse.', missing_movement_sample:'You clicked without moving the mouse first.'};
+      $('panel-eyebrow').textContent='Paused'; $('panel-title').textContent='Pick up where you left off.';
+      $('panel-description').textContent=(reasons[study.lastRecord.invalid_reason]||'Something interrupted that go.')+' It has been thrown out and will come round again at the end of this set.';
+      $('continue-button').textContent='Carry on'; $('panel-note').textContent='Everything you have already done is safe. The next go starts when you click the marker.';
+    } else if (study.state==='complete') {
+      const done = bank.runsDone, banked = bank.rows.length, remaining = StudyCore.TOTAL_RUNS-done;
+      const finished = remaining<=0;
+      $('panel-eyebrow').textContent = finished ? 'All done' : `Round ${done} of ${StudyCore.TOTAL_RUNS} done`;
+      $('panel-title').textContent = finished ? 'That is everything.' : 'Round saved.';
+      $('panel-description').textContent = finished
+        ? `All ${StudyCore.TOTAL_RUNS} rounds are done — ${banked} attempts in total. Save the file and take a look at your results.`
+        : `Saved in your browser with the earlier rounds: ${banked} attempts so far, ${remaining} round${remaining===1?'':'s'} to go. You can stop here and carry on another time.`;
+      $('panel-metrics').hidden=false;
+      $('panel-metrics').replaceChildren(metric(banked,'attempts saved'), metric(done,`of ${StudyCore.TOTAL_RUNS} rounds`), metric(Math.max(0,StudyCore.GRAND_TOTAL-banked),'clicks to go'));
+      $('continue-button').textContent = finished ? 'See my results' : 'Start the next round';
+      $('panel-note').textContent='Misses and thrown-out attempts are in the file too, clearly marked. The two buttons sit at different distances on purpose, so this measures how quick they are to reach, nothing more.';
+    } else if (study.stage==='practice') {
+      $('panel-eyebrow').textContent='Practice complete'; $('panel-title').textContent='Ready for the measured trials.';
+      $('panel-description').textContent=`You have tried both button positions. Next come ${StudyCore.BLOCKS_PER_RUN} sets of ${StudyCore.BLOCK_SIZE} clicks, with a rest after each one. Start your screen recording now if you need one.`;
+      $('continue-button').textContent=`Start round ${study.run} · ${TOTAL} clicks`; $('panel-note').textContent='Practice goes are not saved with the real data. Keep using the same mouse and zoom.';
+    } else {
+      $('panel-eyebrow').textContent=`Set ${study.blockIndex+1} done`; $('panel-title').textContent='Take a short break.';
+      const next=study.blocks[study.blockIndex+1];
+      $('panel-description').textContent=`Next: ${StudyCore.BLOCK_SIZE} clicks with the ${labels[next.layout]} button. Carry on when you are ready.`;
+      $('panel-metrics').hidden=false; $('panel-metrics').replaceChildren(metric(study.measuredCount,`of ${TOTAL} this round`), metric(TOTAL-study.measuredCount,'left this round'), metric(bank.rows.length+study.records.length,'saved so far'));
+      $('continue-button').textContent=`Start set ${study.blockIndex+2}`; $('panel-note').textContent='You can save the data collected so far. Keep the same mouse settings.';
+    }
+  }
+  function render() {
+    if (!study) { showView('intro-view'); return; }
+    if (study.state==='complete' && !study.banked) {
+      study.banked = true;
+      bank = StudyCore.Store.addRun(study.records);
+    }
+    if (['break','interrupted','complete'].includes(study.state)) renderPanel();
+    else { showView('play-view'); progress(); draw(); }
+  }
+  function finishFeedback() {
+    feedbackTimer=null;
+    if (!study || study.state!=='feedback') return;
+    if (!canContinue()) { feedbackPending=true; return; }
+    feedbackPending=false; study.advance(); render();
+  }
+  function afterInput(before) {
+    if (study.state===before) return;
+    render();
+    if (study.state==='feedback') { clearTimeout(feedbackTimer); feedbackTimer=setTimeout(finishFeedback,700); }
+  }
+  function interrupt(reason) { if (study?.interrupt(reason)) render(); }
+  function checkViewport() {
+    const ok=viewportOK(); $('viewport-notice').hidden=ok;
+    $('viewport-size').textContent=`Current viewport: ${innerWidth} × ${innerHeight} pixels.`;
+    $('start-practice').disabled=!ok; $('continue-button').disabled=!ok;
+    if (ok && feedbackPending && canContinue()) finishFeedback();
+  }
+
+  function showResults(rows, source) {
+    const result = Analysis.render(rows);
+    showView('intro-view');
+    if (!result) { $('results-slot').innerHTML='<div class="pending"><strong>Not enough data</strong>There were not enough successful clicks at different difficulties to draw a line through.</div>'; return; }
+    $('results-source').textContent=`From ${source}.`;
+    $('results-slot').innerHTML=result.html;
+    document.getElementById('h-results').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+  function renderBankStatus() {
+    const slot = $('bank-status');
+    if (!bank.runsDone) { slot.innerHTML=''; return; }
+    const remaining = Math.max(0, StudyCore.TOTAL_RUNS-bank.runsDone);
+    slot.innerHTML = `<div class="pending" style="border-style:solid"><strong>In progress</strong>
+      ${bank.rows.length} attempts saved across ${bank.runsDone} of ${StudyCore.TOTAL_RUNS} rounds${remaining?` · ${remaining} to go`:' · all done'}.
+      <div class="actions" style="margin-top:14px">
+        <button class="button" id="bank-export">Save all my data (CSV)</button>
+        <button class="button" id="bank-analyse">See results so far</button>
+        <button class="text-button" id="bank-reset" style="margin-left:6px">Delete and start again</button>
+      </div></div>`;
+    $('bank-export').onclick = () => download(bank.rows,'measured');
+    $('bank-analyse').onclick = () => showResults(bank.rows, `${bank.runsDone} banked run${bank.runsDone===1?'':'s'}`);
+    $('bank-reset').onclick = () => {
+      if (!confirm(`Delete all ${bank.rows.length} saved attempts? You cannot undo this. Save the file first if you want to keep them.`)) return;
+      StudyCore.Store.clear();
+      bank = StudyCore.Store.init();
+      renderBankStatus(); initReport();
+    };
+  }
+  function initReport() {
+    if (VIDEO_EMBED_URL) {
+      $('video-slot').innerHTML=`<div class="video"><iframe src="${VIDEO_EMBED_URL}" title="Screen recording of the measured session" allow="accelerometer; clipboard-write; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`;
+    } else {
+      $('video-slot').innerHTML='<div class="pending"><strong>Nothing here yet</strong>The screen recording goes here once it has been uploaded.</div>';
+    }
+    if (SESSION_CSV.trim()) {
+      const parsed = Analysis.parseCSV(SESSION_CSV);
+      const result = Analysis.render(parsed);
+      if (result) {
+        $('results-source').textContent=`From ${result.audit.attempts} recorded attempts.`;
+        $('results-slot').innerHTML=result.html;
+        return;
+      }
+    }
+    $('results-slot').innerHTML='<div class="pending"><strong>Nothing here yet</strong>No data has been collected yet, so this part is left empty rather than filled with made-up numbers. Run the experiment above and your own formula, chart and table show up here straight away.</div>';
+  }
+
+  function newRun(startAtPractice) {
+    scale = displayScale(); lastDpr = devicePixelRatio;
+    study = new StudyCore.Experiment({runIndex:bank.runsDone, startLayout:bank.startLayout, scale});
+    if (startAtPractice) study.startPractice();
+    else { study.state='break'; study.stage='practice'; study.nextBlock(); }
+    render();
+  }
+  $('start-practice').addEventListener('click',()=>{ if(!viewportOK())return; newRun(bank.runsDone===0); });
+  $('continue-button').addEventListener('click',()=>{
+    if (!viewportOK()||!study) return;
+    if (study.state==='complete') {
+      if (bank.runsDone >= StudyCore.TOTAL_RUNS) showResults(bank.rows, `all ${bank.runsDone} runs`);
+      else newRun(false);
+      return;
+    }
+    if (study.state==='interrupted') study.resume(); else study.nextBlock();
+    render();
+  });
+  window.addEventListener('pointerdown',event=>{
+    if (!study?.isActive) return;
+    if (event.pointerType!=='mouse') { interrupt('unsupported_pointer'); return; }
+    if (event.button!==0 || !event.isPrimary) return;
+    const before=study.state; study.pointerDown(point(event));
+    if (study.state!==before) event.preventDefault(); afterInput(before);
+  });
+  window.addEventListener('pointerup',event=>{ if(!study||event.pointerType!=='mouse'||event.button!==0||!event.isPrimary)return; const before=study.state; study.pointerUp(point(event)); afterInput(before); });
+  window.addEventListener('pointermove',event=>{ if(!study||event.pointerType!=='mouse'||!event.isPrimary)return; const before=study.state; study.pointerMove(point(event),event.buttons); afterInput(before); });
+  window.addEventListener('pointercancel',()=>interrupt('pointer_cancelled'));
+  window.addEventListener('blur',()=>interrupt('focus_lost'));
+  document.addEventListener('visibilitychange',()=>{ if(document.hidden)interrupt('focus_lost'); else if(feedbackPending&&canContinue())finishFeedback(); });
+  window.addEventListener('focus',()=>{ if(feedbackPending&&canContinue())finishFeedback(); });
+  let lastDpr=devicePixelRatio;
+  function viewportChanged() {
+    const next=displayScale();
+    if (next!==scale || lastDpr!==devicePixelRatio) {
+      if (study && ['pressing','armed','moving'].includes(study.state)) interrupt('viewport_changed');
+      scale=next; lastDpr=devicePixelRatio;
+      if (study) { study.scale=scale; if (study.state==='ready') study.prepare(); }
+    }
+    checkViewport(); if (study?.isActive) draw();
+  }
+  window.addEventListener('resize',viewportChanged);
+  (function watchPixelRatio() { matchMedia(`(resolution: ${devicePixelRatio}dppx)`).addEventListener('change',()=>{viewportChanged();watchPixelRatio();},{once:true}); })();
+  function download(rows,kind) {
+    const stamp = new Date().toISOString().slice(0,10);
+    const blob=new Blob(['﻿',StudyCore.csv(rows)],{type:'text/csv;charset=utf-8;'}), url=URL.createObjectURL(blob), link=document.createElement('a');
+    link.href=url; link.download=`threadlet-${kind}-${stamp}.csv`; document.body.append(link); link.click(); link.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+    $('export-status').textContent=`Saving ${rows.length} ${kind} row${rows.length===1?'':'s'}. Distance and size are in pixels, time is in milliseconds.`;
+  }
+  const allMeasured = () => bank.rows.concat(study && !study.banked ? study.records : []);
+  $('export-button').addEventListener('click',()=>download(allMeasured(),'measured'));
+  $('practice-export').addEventListener('click',()=>download(study.practiceRecords,'practice'));
+  if (bank.runsDone) {
+    $('start-practice').innerHTML = `Carry on with round ${bank.runsDone+1} of ${StudyCore.TOTAL_RUNS} <span aria-hidden="true">→</span>`;
+  }
+  renderBankStatus();
+  initReport();
+  checkViewport();
+})();
+</script>
+</body>
+</html>
